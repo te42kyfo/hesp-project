@@ -2,7 +2,7 @@
 NAME=hesp
 CXX= g++
 LIB= -lOpenCL
-CPPFLAGS= -Ofast -Wall -Werror -std=c++0x
+CPPFLAGS= -Ofast -Wall --diagnostics-color=always -std=c++0x
 SRC= main.cpp
 
 HEADERS= $(shell find . -iname "*.hpp")
