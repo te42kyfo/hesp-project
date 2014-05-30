@@ -37,15 +37,13 @@ int main(int argc, char** argv) {
 	ocl.copyUp( force );
 	ocl.copyUp( mass );
 
-	v3ptr pos_ptr = pos.getV3ptr();
-	v3ptr vel_ptr = vel.getV3ptr();
-	v3ptr force_ptr = force.getV3ptr();
-
 	ocl.execute( update_velocities_kernel, 1,
 				 {1024, 1024, 0},
 				 {1024, 2, 0},
-				 N, dt, pos.getV3ptr(), vel.getV3ptr(), force.getV3ptr() );
-
+				 &N, &dt,
+				 pos.x.device(), pos.y.device(), pos.z.device(),
+				 vel.x.device(), vel.y.device(), vel.z.device(),
+				 force.x.device(), force.y.device(), force.z.device() );
 
 	ocl.copyDown( pos );
 	ocl.copyDown( vel );
