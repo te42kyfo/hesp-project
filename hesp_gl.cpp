@@ -4,7 +4,8 @@
 #include <math.h>
 #include <iostream>
 #include <cstdio>
-
+#include <random>
+#include <algorithm>
 #include <sys/time.h>
 
 #include "vis/sdl_gl.hpp"
@@ -26,9 +27,9 @@ void advance( vector<float>& px, vector<float>& py, vector<float>& pz)  {
 	static size_t frame_counter = 0;
 
 	for( size_t i = 0; i < px.size(); i++) {
-		px[i] = sin(frame_counter*(i%10)/1000.0);
-		py[i] = sin(frame_counter*(i%13)/1000.0);
-		pz[i] = sin(frame_counter*(i%17)/1000.0);
+		px[i] = px[i]*0.8 + 0.2*sin(frame_counter*(i%100)/1000.0 + sin(pz[i]));
+		py[i] = py[i]*0.8 + 0.2*sin(frame_counter*(i%103)/1000.0 + sin(px[i]));
+		pz[i] = pz[i]*0.8 + 0.2*sin(frame_counter*(i%107)/1000.0 + sin(py[i]));
 	}
 
 	frame_counter++;
@@ -37,11 +38,15 @@ void advance( vector<float>& px, vector<float>& py, vector<float>& pz)  {
 
 int main(int argc, char *argv[]) {
 
-	size_t N = 1000;
+	size_t N = 10000;
 
 	vector<float> px(N);
 	vector<float> py(N);
 	vector<float> pz(N);
+
+	generate(px.begin(), px.end(), [](){ return (rand() % 1000) /500.0-1.0;} );
+	generate(py.begin(), py.end(), [](){ return (rand() % 1000) /500.0-1.0;} );
+	generate(pz.begin(), pz.end(), [](){ return (rand() % 1000) /500.0-1.0;} );
 
 
 
@@ -86,6 +91,7 @@ int main(int argc, char *argv[]) {
 
 		frame_time = now;
 
+		advance( px, py, pz);
 		vis.drawParticles( px.data(), py.data(), pz.data(), px.size() );
 
 		SDL_GL_SwapWindow( vis.window);
