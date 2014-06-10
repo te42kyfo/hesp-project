@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
-
+#include <vector>
 #include "errors.hpp"
 #include "v3.h"
 
@@ -29,10 +29,10 @@ std::string clGetPlatformInfoString( cl_platform_info info_id, cl_platform_id pl
 
 template<class T>
 struct OCLBuffer {
-	std::unique_ptr<T> host_mem;
+	std::vector<T> host_mem;
 	cl_mem device_mem;
-	T* host() { return host_mem.get(); };
-	cl_mem& device() { return device_mem; };
+	std::vector<T>& host() { return host_mem; };
+	cl_mem device() { return device_mem; };
 
 	size_t elements;
 };
@@ -42,10 +42,6 @@ struct OCLv3Buffer {
 	OCLBuffer<T> x;
 	OCLBuffer<T> y;
 	OCLBuffer<T> z;
-	v3ptr getV3ptr() {
-		return v3ptr{ (T*) x.device(), (T*) y.device(), (T*) z.device() };
-	}
-
 };
 
 
@@ -134,7 +130,7 @@ public:
 
 		OCLBuffer<T> result;
 		result.elements = elements;
-		result.host_mem = std::unique_ptr<T>(new T[ elements ] ) ;
+		result.host_mem = std::vector<T>(elements);
 		cl_int error;
 		result.device_mem = clCreateBuffer( context, CL_MEM_READ_WRITE, elements*sizeof(T),
 											nullptr, &error);
@@ -146,14 +142,14 @@ public:
 	void copyUp( OCLBuffer<T>& buffer) {
 		cl_check( clEnqueueWriteBuffer( queue, buffer.device_mem, CL_TRUE, 0,
 										sizeof(T) * buffer.elements,
-										buffer.host_mem.get(), 0, NULL, NULL));
+										buffer.host().data(), 0, NULL, NULL));
 	}
 
 	template<class T>
 	void copyDown( OCLBuffer<T>& buffer) {
 		cl_check( clEnqueueReadBuffer( queue, buffer.device_mem, CL_TRUE, 0,
 									   sizeof(T) * buffer.elements,
-									   buffer.host_mem.get(), 0, NULL, NULL));
+									   buffer.host().data(), 0, NULL, NULL));
 	}
 
 
@@ -186,19 +182,18 @@ public:
 private:
 	void execute_t( size_t argument_index, cl_kernel kernel, size_t dim,
 				  std::vector<size_t> global_size, std::vector<size_t> local_size) {
-
 		cl_check( clEnqueueNDRangeKernel( queue, kernel, dim, NULL,
 										  global_size.data(), local_size.data(),
 										  0, NULL, NULL)) ;
 
 	}
 
+
 	template<typename T, typename ... Args>
 	void execute_t( size_t argument_index, cl_kernel kernel, size_t dim,
 				  std::vector<size_t> global_size, std::vector<size_t> local_size,
 				  T argument, Args... args) {
-		cl_check( clSetKernelArg( kernel, argument_index, sizeof(T), argument) );
-
+		cl_check( clSetKernelArg( kernel, argument_index, sizeof(T), &argument) );
 		execute_t( argument_index+1, kernel, dim, global_size, local_size, args...);
 	}
 public:
@@ -206,7 +201,6 @@ public:
 	void execute( cl_kernel kernel, size_t dim,
 				  std::vector<size_t> global_size, std::vector<size_t> local_size,
 				  Args... args) {
-
 		execute_t( 0, kernel, dim, global_size, local_size, args...);
 	}
 

@@ -7,9 +7,9 @@ __kernel void update_velocities ( const unsigned N, const float dt,
 	size_t gid = get_global_id(0);
 	if( gid >= N) return;
 
-	px[gid] += dt * vx[gid] + 0.5 * dt*dt * fx[gid];
-	py[gid] += dt * vy[gid] + 0.5 * dt*dt * fy[gid];
-	pz[gid] += dt * vz[gid] + 0.5 * dt*dt * fz[gid];
+	float dt2 = 0.5*dt*dt;
 
-
+	px[gid] += dt * vx[gid] + dt2 * fx[gid];
+	py[gid] += dt * vy[gid] + dt2 * fy[gid];
+	pz[gid] += dt * vz[gid] + dt2 * fz[gid];
 }
