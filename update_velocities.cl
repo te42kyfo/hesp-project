@@ -5,14 +5,7 @@ __kernel void update_velocities( const unsigned int N,
 								 global real * m,
 								 global real * px, global real * py, global real * pz,
 								 global real * vx, global real * vy, global real * vz,
-								 global real * fx, global real * fy, global real * fz,
-								 global int* cells, global int* links,
-								 const real xmin, const real ymin, const real zmin,
-								 const real xmax, const real ymax, const real zmax,
-								 const unsigned int nx,
-								 const unsigned int ny,
-								 const unsigned int nz,
-								 const real r_cut) {
+								 global real * fx, global real * fy, global real * fz) {
 
 
 	const int globalid = get_global_id(0);
@@ -48,6 +41,11 @@ __kernel void update_velocities( const unsigned int N,
 	vx[globalid] += (fx[globalid] + new_force_x) * dt * 0.5 / m[globalid];
 	vy[globalid] += (fy[globalid] + new_force_y) * dt * 0.5 / m[globalid];
 	vz[globalid] += (fz[globalid] + new_force_z) * dt * 0.5 / m[globalid];
+
+	vx[globalid] *= 0.99;
+	vy[globalid] *= 0.99;
+	vz[globalid] *= 0.99;
+
 
 	fx[globalid] = new_force_x;
 	fy[globalid] = new_force_y;

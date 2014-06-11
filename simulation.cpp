@@ -9,6 +9,8 @@ Simulation::Simulation(ParfileReader& params) {
 
 		dt = params.getDouble("timestep_length");
 		sigma = params.getDouble("sigma");
+		epsilon = params.getDouble("epsilon");
+
 		cl_workgroup_1dsize = params.getInt("cl_workgroup_1dsize");
 
 		update_velocities_kernel = ocl.buildKernel( "./update_velocities.cl",
@@ -50,6 +52,16 @@ void Simulation::readInputFile(std::string filename) {
 }
 
 void Simulation::step() {
+	ocl.execute( update_velocities_kernel, 1,
+				 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
+				 {cl_workgroup_1dsize, 0, 0},
+				 (unsigned int) pos.x.deviceCount,
+				 (real) dt, (real) epsilon, (real) sigma,
+				 mass.device(),
+				 pos.x.device(), pos.y.device(), pos.z.device(),
+				 vel.x.device(), vel.y.device(), vel.z.device(),
+				 force.x.device(), force.y.device(), force.z.device() );
+
 	ocl.execute( update_positions_kernel, 1,
 				 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
 				 {cl_workgroup_1dsize, 0, 0},

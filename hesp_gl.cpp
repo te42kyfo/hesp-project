@@ -9,7 +9,8 @@
 #include <sys/time.h>
 
 #include "vis/sdl_gl.hpp"
-
+#include "simulation.hpp"
+#include "parfile_reader.hpp"
 
 using namespace std;
 
@@ -23,31 +24,18 @@ double dtime() {
 }
 
 
-void advance( vector<float>& px, vector<float>& py, vector<float>& pz)  {
-	static size_t frame_counter = 0;
-
-	for( size_t i = 0; i < px.size(); i++) {
-		px[i] = px[i]*0.8 + 0.2*sin(frame_counter*(i%100)/1000.0 + sin(pz[i]));
-		py[i] = py[i]*0.8 + 0.2*sin(frame_counter*(i%103)/1000.0 + sin(px[i]));
-		pz[i] = pz[i]*0.8 + 0.2*sin(frame_counter*(i%107)/1000.0 + sin(py[i]));
-	}
-
-	frame_counter++;
-}
-
-
 int main(int argc, char *argv[]) {
 
-	size_t N = 10000;
 
-	vector<float> px(N);
-	vector<float> py(N);
-	vector<float> pz(N);
+	if(argc < 2) {
+		std::cerr << "Not enough parameters\n Usage: "
+				  << argv[0] << "<parameter file>\n";
+		exit(1);
+	}
 
-	generate(px.begin(), px.end(), [](){ return (rand() % 1000) /500.0-1.0;} );
-	generate(py.begin(), py.end(), [](){ return (rand() % 1000) /500.0-1.0;} );
-	generate(pz.begin(), pz.end(), [](){ return (rand() % 1000) /500.0-1.0;} );
-
+	ParfileReader params(argv[1]);
+	double dt = params.getDouble( "timestep_length" );
+	Simulation	sim( params );
 
 
 
@@ -91,8 +79,18 @@ int main(int argc, char *argv[]) {
 
 		frame_time = now;
 
-		advance( px, py, pz);
-		vis.drawParticles( px.data(), py.data(), pz.data(), px.size() );
+
+
+		sim.step();
+		sim.step();
+		sim.step();
+		sim.step();
+		sim.copyDown();
+
+		vis.drawParticles( sim.pos.x.host().data(),
+						   sim.pos.y.host().data(),
+						   sim.pos.z.host().data(),
+						   sim.pos.z.host().size() );
 
 		SDL_GL_SwapWindow( vis.window);
 	}

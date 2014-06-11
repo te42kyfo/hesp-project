@@ -21,6 +21,7 @@ public:
 	unsigned int particleCount;
 	double dt;
 	double sigma;
+	double epsilon;
 	unsigned int cl_workgroup_1dsize;
 
 

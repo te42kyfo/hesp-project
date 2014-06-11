@@ -1,6 +1,7 @@
 #include "sdl_gl.hpp"
 
 #include <vector>
+#include <iostream>
 
 using namespace std;
 
@@ -37,12 +38,14 @@ void SdlGl::drawParticles(float* px, float* py, float* pz, size_t particleCount)
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_FLOAT, 0, vertices.data() );
 
+
 	for(size_t i = 0; i < particleCount; i++) {
 		glLoadIdentity();
+		glTranslatef(-1.5, -0.5, 0);
 
-		//		glScalef(0.2, 0.2, 0.2);
+		glScalef(0.05, 0.05, 0.05);
 		glTranslatef( px[i], py[i], pz[i]);
-		glScalef(0.001, 0.001, 0.001);
+		glScalef(0.2, 0.2, 0.0);
 
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_BYTE, indices.data() );
 	}
