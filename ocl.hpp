@@ -1,3 +1,6 @@
+#ifndef OCL_HPP
+#define OCL_HPP
+
 #include <CL/opencl.h>
 #include <vector>
 #include <string>
@@ -5,36 +8,21 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-#include "errors.hpp"
 #include "v3.h"
 
-void cl_check( cl_int code ) {
-	if( code != CL_SUCCESS) {
-		std::cerr << "OpenCL error code " << code
-				  << ": " << clErrorString(code) << "\n";
-		//		exit(1);
-	}
-}
+void cl_check( cl_int code );
 
-std::string clGetPlatformInfoString( cl_platform_info info_id, cl_platform_id platform_id ) {
-	size_t return_size = 0;
-	cl_check( clGetPlatformInfo( platform_id, info_id, 0, nullptr, &return_size));
-	char return_value[return_size];
-
-	cl_check( clGetPlatformInfo( platform_id, info_id, return_size,
-								 return_value, NULL));
-	return std::string(return_value);
-}
+std::string clGetPlatformInfoString( cl_platform_info info_id, cl_platform_id platform_id );
 
 
 template<class T>
 struct OCLBuffer {
 	std::vector<T> host_mem;
-	cl_mem device_mem;
+	cl_mem device_mem = nullptr;
 	std::vector<T>& host() { return host_mem; };
 	cl_mem device() { return device_mem; };
 
-	size_t elements;
+	size_t deviceCount = 0;
 };
 
 template<class T>
@@ -47,108 +35,46 @@ struct OCLv3Buffer {
 
 class OCL {
 public:
-	void init() {
-		cl_platform_id ids[5];
-		cl_uint num_platforms = 0;
+	void init();
 
-		cl_check( clGetPlatformIDs( 5, ids, &num_platforms) );
-		cl_platform_id chosen_id = ids[0];
-
-		for( size_t id = 0; id < num_platforms; id++) {
-			std::cout << std::to_string(id) << ": "
-					  << clGetPlatformInfoString( CL_PLATFORM_VENDOR, ids[id]) << "\n"
-					  << clGetPlatformInfoString( CL_PLATFORM_NAME, ids[id]) << "\n\n";
-		}
-
-		if( num_platforms > 1) {
-			std::cout << "Choose Platform: ";
-			size_t chosen_idx = 0;
-			std::cin >> chosen_idx;
-			chosen_id = ids[chosen_idx];
-		}
-
-		cl_int error;
-
-		cl_check( clGetDeviceIDs(chosen_id, CL_DEVICE_TYPE_DEFAULT, 1, &device, NULL) );
-		context = clCreateContext(0, 1, & device, NULL, NULL, &error);
-		cl_check( error );
-
-		queue = clCreateCommandQueue(context, device, 0, &error);
-		cl_check( error );
-	}
-
-	cl_kernel buildKernel (std::string filename, std::string kernel_name) {
-		std::string source;
-		try {
-			std::ifstream t( filename.c_str() );
-			source = std::string( (std::istreambuf_iterator<char>(t)),
-								  std::istreambuf_iterator<char>());
-		} catch( std::exception& e) {
-			std::cout << filename << " - " << "readShaderFile: " << e.what() << "\n";
-			exit(1);
-		}
-
-		cl_int error = CL_SUCCESS;
-
-		const char* char_source = source.c_str();
-
-		cl_program program = clCreateProgramWithSource( context, 1, &char_source,
-														NULL, &error);
-		cl_check(error);
-
-		cl_check( clBuildProgram(program, 0, NULL, NULL, NULL, NULL));
-
-
-
-		cl_build_status build_status = CL_BUILD_SUCCESS;
-
-		cl_check( clGetProgramBuildInfo( program, device, CL_PROGRAM_BUILD_STATUS,
-										 sizeof(cl_build_status), &build_status, nullptr));
-
-
-		if( build_status != CL_BUILD_SUCCESS) {
-
-			size_t logsize = 0;
-			cl_check( clGetProgramBuildInfo( program, device, CL_PROGRAM_BUILD_LOG,
-											 0, 0, &logsize));
-			char log[logsize];
-
-			cl_check( clGetProgramBuildInfo( program, device, CL_PROGRAM_BUILD_LOG,
-											 logsize, log, nullptr));
-
-			std::cout << "Build log: " << log << "\n";
-		}
-
-		cl_kernel kernel = clCreateKernel(program, kernel_name.c_str(), &error);
-		cl_check(error);
-
-		return kernel;
-	}
+	cl_kernel buildKernel (std::string filename, std::string kernel_name);
 
 	template<class T>
 	OCLBuffer<T> buffer( size_t elements ) {
-
 		OCLBuffer<T> result;
-		result.elements = elements;
+		if( elements == 0) return result;
+
+		result.deviceCount = elements;
 		result.host_mem = std::vector<T>(elements);
 		cl_int error;
 		result.device_mem = clCreateBuffer( context, CL_MEM_READ_WRITE, elements*sizeof(T),
 											nullptr, &error);
 		cl_check(error);
 		return result;
+
 	}
 
 	template<class T>
 	void copyUp( OCLBuffer<T>& buffer) {
+		if( buffer.host_mem.size() == 0) return;
+
+		if( buffer.device_mem == nullptr) {
+			buffer.deviceCount = buffer.host_mem.size();
+			cl_int error;
+			buffer.device_mem = clCreateBuffer( context, CL_MEM_READ_WRITE,
+												buffer.deviceCount*sizeof(T),
+												nullptr, &error);
+			cl_check(error);
+		}
 		cl_check( clEnqueueWriteBuffer( queue, buffer.device_mem, CL_TRUE, 0,
-										sizeof(T) * buffer.elements,
+										sizeof(T) * buffer.deviceCount,
 										buffer.host().data(), 0, NULL, NULL));
 	}
 
 	template<class T>
 	void copyDown( OCLBuffer<T>& buffer) {
 		cl_check( clEnqueueReadBuffer( queue, buffer.device_mem, CL_TRUE, 0,
-									   sizeof(T) * buffer.elements,
+									   sizeof(T) * buffer.deviceCount,
 									   buffer.host().data(), 0, NULL, NULL));
 	}
 
@@ -209,3 +135,5 @@ public:
 	cl_context context;
 	cl_command_queue queue;
 };
+
+#endif
