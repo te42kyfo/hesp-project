@@ -27,13 +27,22 @@ public:
 
 	cl_kernel update_velocities_kernel;
 	cl_kernel update_positions_kernel;
+	cl_kernel reset_links_kernel;
+	cl_kernel reset_cells_kernel;
+	cl_kernel update_cells_kernel;
+
 	OCLv3Buffer<real> pos;
 	OCLv3Buffer<real> vel;
 	OCLv3Buffer<real> force;
 	OCLBuffer<real> mass;
+	OCLBuffer<int> links;
+	OCLBuffer<int> cells;
+
 
 	double x1, y1, z1;
 	double x2, y2, z2;
+	double r_cut;
+	unsigned int nx, ny, nz;
 
 
 	OCL ocl;

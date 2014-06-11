@@ -119,7 +119,12 @@ private:
 	void execute_t( size_t argument_index, cl_kernel kernel, size_t dim,
 				  std::vector<size_t> global_size, std::vector<size_t> local_size,
 				  T argument, Args... args) {
-		cl_check( clSetKernelArg( kernel, argument_index, sizeof(T), &argument) );
+		cl_int err =  clSetKernelArg( kernel, argument_index, sizeof(T), &argument);
+		if( err != CL_SUCCESS) {
+			std::cerr << "Argument index " << argument_index << " " << argument << "\n";
+			cl_check(err);
+		}
+
 		execute_t( argument_index+1, kernel, dim, global_size, local_size, args...);
 	}
 public:

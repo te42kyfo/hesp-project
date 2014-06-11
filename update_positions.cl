@@ -16,14 +16,19 @@ __kernel void update_positions ( const unsigned N, const real dt,
 	py[gid] += dt * vy[gid] + dt2 * fy[gid];
 	pz[gid] += dt * vz[gid] + dt2 * fz[gid];
 
+	real bx = (px[gid]-x1) / (x2-x1);
+	real by = (py[gid]-y1) / (y2-y1);
+	real bz = (pz[gid]-z1) / (z2-z1);
 
-	if( px[gid] < x1 ) px[gid] += (x2-x1);
-	if( py[gid] < y1 ) py[gid] += (y2-y1);
-	if( pz[gid] < z1 ) pz[gid] += (z2-z1);
+	if( bx >= (real) 1.0 ) px[gid] = x1+fmod(bx, (real) 1.0) * (x2-x1);
+	if( by >= (real) 1.0 ) py[gid] = y1+fmod(by, (real) 1.0) * (y2-y1);
+	if( bz >= (real) 1.0 ) pz[gid] = z1+fmod(bz, (real) 1.0) * (z2-z1);
 
-	if( px[gid] > x2 ) px[gid] -= (x2-x1);
-	if( py[gid] > y2 ) py[gid] -= (y2-y1);
-	if( pz[gid] > z2 ) pz[gid] -= (z2-z1);
+	if( bx < (real) 0.0 ) px[gid] = x1+((real) 1.0-fmod(bx, (real) 1.0)) * (x2-x1);
+	if( by < (real) 0.0 ) py[gid] = y1+((real) 1.0-fmod(by, (real) 1.0)) * (y2-y1);
+	if( bz < (real) 0.0 ) pz[gid] = z1+((real) 1.0-fmod(bz, (real) 1.0)) * (z2-z1);
+
+
 
 
 }
