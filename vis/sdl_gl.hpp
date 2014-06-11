@@ -24,7 +24,8 @@ public:
 	void drawSlice(float* slice_ptr, size_t width, size_t height);
 
 	void initDrawParticles();
-	void drawParticles(float* px, float* py, float* pz, size_t particleCount);
+	void drawParticles(float* px, float* py, float* pz, size_t particleCount,
+					   float x1, float y1, float z1, float x2, float y2, float z2);
 
     SDL_Window* window;
 	SDL_GLContext  gl_context;

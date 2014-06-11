@@ -11,6 +11,10 @@ Simulation::Simulation(ParfileReader& params) {
 		sigma = params.getDouble("sigma");
 		epsilon = params.getDouble("epsilon");
 
+		params.initDoubleList( { {"x_min", x1}, {"y_min", y1}, {"z_min", z1},
+								 {"x_max", x2}, {"y_max", y2}, {"z_max", z2} });
+
+
 		cl_workgroup_1dsize = params.getInt("cl_workgroup_1dsize");
 
 		update_velocities_kernel = ocl.buildKernel( "./update_velocities.cl",
@@ -60,7 +64,8 @@ void Simulation::step() {
 				 mass.device(),
 				 pos.x.device(), pos.y.device(), pos.z.device(),
 				 vel.x.device(), vel.y.device(), vel.z.device(),
-				 force.x.device(), force.y.device(), force.z.device() );
+				 force.x.device(), force.y.device(), force.z.device(),
+				 (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2 );
 
 	ocl.execute( update_positions_kernel, 1,
 				 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
@@ -68,7 +73,8 @@ void Simulation::step() {
 				 (unsigned int) pos.x.deviceCount, (real) dt,
 				 pos.x.device(), pos.y.device(), pos.z.device(),
 				 vel.x.device(), vel.y.device(), vel.z.device(),
-				 force.x.device(), force.y.device(), force.z.device() );
+				 force.x.device(), force.y.device(), force.z.device(),
+				 (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2);
 }
 
 void Simulation::copyDown() {

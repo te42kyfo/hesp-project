@@ -34,15 +34,17 @@ int main(int argc, char *argv[]) {
 	}
 
 	ParfileReader params(argv[1]);
-	double dt = params.getDouble( "timestep_length" );
+
 	Simulation	sim( params );
-
-
 
 	SdlGl vis;
 	vis.initDisplay();
 	vis.initDrawParticles();
 	vis.setViewport(800, 600);
+
+	double x1,y1,z1,x2,y2,z2;
+	params.initDoubleList( { {"x_min", x1}, {"y_min", y1}, {"z_min", z1},
+							 {"x_max", x2}, {"y_max", y2}, {"z_max", z2} });
 
 
 
@@ -90,7 +92,8 @@ int main(int argc, char *argv[]) {
 		vis.drawParticles( sim.pos.x.host().data(),
 						   sim.pos.y.host().data(),
 						   sim.pos.z.host().data(),
-						   sim.pos.z.host().size() );
+						   sim.pos.z.host().size(),
+						   x1, y1, z1, x2, y2, z2 );
 
 		SDL_GL_SwapWindow( vis.window);
 	}

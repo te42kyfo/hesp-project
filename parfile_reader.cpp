@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 using namespace std;
 
@@ -13,7 +14,7 @@ ParfileReader::ParfileReader( string filename ) {
 	}
 	string line;
 	while (getline(infile, line)) {
-		istringstream iss(line);
+		stringstream iss(line);
 		string key;
 		string value;
 		if( !(iss >> key >> value)) {
@@ -30,6 +31,12 @@ int ParfileReader::getInt( string key ) {
 
 double ParfileReader::getDouble( string key ) {
 	return stod( lookUp(key) );
+}
+
+void ParfileReader::initDoubleList( vector<pair<string, double&>> pairs) {
+	for( auto& it: pairs) {
+		it.second = this->getDouble(it.first);
+	}
 }
 
 string ParfileReader::getString( string key ) {

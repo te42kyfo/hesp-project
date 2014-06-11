@@ -11,7 +11,9 @@ void SdlGl::initDrawParticles() {
 	glDisable(GL_DEPTH_TEST);
 }
 
-void SdlGl::drawParticles(float* px, float* py, float* pz, size_t particleCount) {
+void SdlGl::drawParticles(float* px, float* py, float* pz, size_t particleCount,
+						  float x1, float y1, float z1, float x2, float y2, float z2) {
+
 	glClear( GL_COLOR_BUFFER_BIT );
 	glLoadIdentity();
 
@@ -38,17 +40,35 @@ void SdlGl::drawParticles(float* px, float* py, float* pz, size_t particleCount)
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_FLOAT, 0, vertices.data() );
 
+	float xscale = 2.0/(x2-x1)*0.98;
+	float yscale = 2.0/(y2-y1)*0.98;
+	float zscale = 2.0/(z2-z1)*0.0;
+
 
 	for(size_t i = 0; i < particleCount; i++) {
 		glLoadIdentity();
-		glTranslatef(-1.5, -0.5, 0);
 
-		glScalef(0.05, 0.05, 0.05);
+		//		glTranslatef( x1, y1, 0.0);
+
+
+		glScalef(xscale, yscale, zscale);
 		glTranslatef( px[i], py[i], pz[i]);
-		glScalef(0.2, 0.2, 0.0);
+		glTranslatef( x1, y1, z1);
+		glScalef(0.6, 0.6, 0.0);
 
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_BYTE, indices.data() );
 	}
+
+
+	glLoadIdentity();
+	glBegin(GL_LINE_STRIP);
+	glVertex2f( -0.98, -0.98);
+	glVertex2f( -0.98, 0.98);
+	glVertex2f( 0.98, 0.98);
+	glVertex2f( 0.98, -0.98);
+	glVertex2f( -0.98, -0.98);
+	glEnd();
+
 
 
 	glDisableClientState(GL_VERTEX_ARRAY);

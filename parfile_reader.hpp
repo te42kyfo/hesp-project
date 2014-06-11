@@ -3,7 +3,7 @@
 
 #include <string>
 #include <map>
-#include <sstream>
+#include <vector>
 
 class ParfileReader {
 public:
@@ -12,6 +12,8 @@ public:
 	int getInt( std::string key );
 	double getDouble( std::string key );
 	std::string getString( std::string key );
+
+	void initDoubleList( std::vector<std::pair< std::string, double&>> pairs);
 
 private:
 

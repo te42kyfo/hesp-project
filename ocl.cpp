@@ -91,7 +91,7 @@ cl_kernel OCL::buildKernel ( string filename, string kernel_name) {
 		cl_check( clGetProgramBuildInfo( program, device, CL_PROGRAM_BUILD_LOG,
 										 logsize, log, nullptr));
 
-		cout << "Build log: " << log << "\n";
+		cout << "Build log of file " << filename <<  " :\n"  << log << "\n";
 	}
 
 	cl_kernel kernel = clCreateKernel(program, kernel_name.c_str(), &error);

@@ -32,6 +32,9 @@ public:
 	OCLv3Buffer<real> force;
 	OCLBuffer<real> mass;
 
+	double x1, y1, z1;
+	double x2, y2, z2;
+
 
 	OCL ocl;
 };
