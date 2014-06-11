@@ -14,13 +14,14 @@ void SdlGl::drawParticles(float* px, float* py, float* pz, size_t particleCount)
 	glClear( GL_COLOR_BUFFER_BIT );
 	glLoadIdentity();
 
-	vector<GLfloat> vertices = 	{ 0.0,    0.0, 0.0,
-								  0.87,   0.5, 0.0,
-								  0.0,    1.0, 0.0,
-								  -0.87,  0.5, 0.0,
-								  -0.87, -0.5, 0.0,
-								  0.0,   -1.0, 0.0,
-								  0.87,  -0.5, 0.0};
+	vector<GLfloat> vertices =
+		{  0.0,			0.0,	0.0,
+		  0.87,			0.5,	0.0,
+		  0.0,			1,		0.0,
+		  -0.87,		0.5,	0,
+		  -0.87,		-0.5,	0.0,
+		  0.0,			-1.0,	0.0,
+		  0.87,			-0.5,	0.0};
 
 	vector<GLubyte> indices  =
 		{ 0, 1, 2,
