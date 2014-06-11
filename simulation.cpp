@@ -1,5 +1,8 @@
 #include "simulation.hpp"
 
+#include <limits>
+#include <sstream>
+#include <iostream>
 #include <fstream>
 #include <iterator>
 using namespace std;
@@ -8,16 +11,21 @@ Simulation::Simulation(ParfileReader& params) {
 		ocl.init();
 
 		dt = params.getDouble("timestep_length");
-		sigma = params.getDouble("sigma");
-		epsilon = params.getDouble("epsilon");
+		ks = params.getDouble("k_s");
+		kd = params.getDouble("k_d");
+
 
 		params.initDoubleList( { {"x_min", x1}, {"y_min", y1}, {"z_min", z1},
-							   {"x_max", x2}, {"y_max", y2}, {"z_max", z2},
-							   {"r_cut", r_cut} });
+			  				     {"x_max", x2}, {"y_max", y2}, {"z_max", z2},
+								 {"g_x", gx}, {"g_y", gy}, {"g_z", gz} });
 
 		nx = params.getInt( "x_n" );
 		ny = params.getInt( "y_n" );
 		nz = params.getInt( "z_n" );
+
+		reflect_x = params.getInt( "reflect_x" );
+		reflect_y = params.getInt( "reflect_y" );
+		reflect_z = params.getInt( "reflect_z" );
 
 
 		cl_workgroup_1dsize = params.getInt("cl_workgroup_1dsize");
@@ -47,31 +55,48 @@ Simulation::Simulation(ParfileReader& params) {
 		ocl.copyUp( vel );
 		ocl.copyUp( force );
 		ocl.copyUp( mass );
+		ocl.copyUp( radius );
 		ocl.copyUp( links );
 		ocl.copyUp( cells );
 }
 
 void Simulation::readInputFile(std::string filename) {
 	ifstream infile(filename);
-	if( !infile ) {
-		cerr << "Error reading file " << filename << "\n";
+	if( !infile.is_open() ) {
+		perror( filename.c_str() );
 		exit(1);
 	}
 
-	int element_count;
-	infile >> element_count;
+	string line;
+	getline(infile, line);
 
-	istream_iterator<double> it(infile);
+	while( getline(infile, line) ) {
+		istringstream line_stream(line);
 
-	while( infile ) {
-		mass.host().push_back(   *it++ );
+		string mass_string;
+		line_stream >> mass_string;
+		if( mass_string == "inf" ) {
+			mass.host().push_back( std::numeric_limits<real>::infinity() );
+		} else {
+			mass.host().push_back( stod( mass_string ) );
+		}
+
+		istream_iterator<double> it( line_stream );
+
+		radius.host().push_back(  *it++ );
 		pos.x.host().push_back(  *it++ );
 		pos.y.host().push_back(  *it++ );
 		pos.z.host().push_back(  *it++ );
 		vel.x.host().push_back(  *it++ );
 		vel.y.host().push_back(  *it++ );
 		vel.z.host().push_back(  *it++ );
+
+
 	}
+	if (infile.bad()) {
+		perror( filename.c_str() );
+	}
+
 }
 
 void Simulation::step() {
@@ -100,20 +125,22 @@ void Simulation::step() {
 				 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
 				 {cl_workgroup_1dsize, 0, 0},
 				 (unsigned int) pos.x.deviceCount,
-				 (real) dt, (real) epsilon, (real) sigma,
-				 mass.device(),
+				 (real) dt, (real) ks, (real) kd,
+				 (real) gx, (real) gy, (real) gz,
+				 reflect_x,  reflect_y,  reflect_z,
+				 mass.device(), radius.device(),
 				 pos.x.device(), pos.y.device(), pos.z.device(),
 				 vel.x.device(), vel.y.device(), vel.z.device(),
 				 force.x.device(), force.y.device(), force.z.device(),
 				 cells.device(), links.device(),
 				 (real) x1, (real) y1, (real) z1, (real) x2, (real) y2, (real) z2,
-				 (unsigned int) nx, (unsigned int) ny, (unsigned int) nz,
-				 (real) r_cut );
+				 (unsigned int) nx, (unsigned int) ny, (unsigned int) nz);
 
 	ocl.execute( update_positions_kernel, 1,
 				 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
 				 {cl_workgroup_1dsize, 0, 0},
 				 (unsigned int) pos.x.deviceCount, (real) dt,
+				 reflect_x,  reflect_y,  reflect_z,
 				 pos.x.device(), pos.y.device(), pos.z.device(),
 				 vel.x.device(), vel.y.device(), vel.z.device(),
 				 force.x.device(), force.y.device(), force.z.device(),
@@ -141,6 +168,7 @@ void Simulation::writeASCII( ostream& outputStream ) {
 		}
 		outputStream << fixed
 					 << mass.host()[i] << " "
+					 << radius.host()[i] << " "
 					 << pos.x.host()[i] << " "
 					 << pos.y.host()[i] << " "
 					 << pos.z.host()[i] << " "
@@ -180,6 +208,13 @@ void Simulation::writeVTK( ostream& outputStream ) {
 
 	for( size_t i = 0; i < pos.x.host().size(); i++) {
 		outputStream << fixed << mass.host()[i] << "\n";
+	}
+
+	outputStream << "SCALARS radius double\n"
+				 << "LOOKUP_TABLE default\n";
+
+	for( size_t i = 0; i < pos.x.host().size(); i++) {
+		outputStream << fixed << radius.host()[i] << "\n";
 	}
 
 	outputStream << "VECTORS v double\n";

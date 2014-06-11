@@ -9,7 +9,7 @@ void SdlGl::setViewport( int width, int height ) {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	glOrtho( (float) -width/height, (float) width/height, -1, 1, -1, 1);
+	glOrtho( (float) -width/height, (float) width/height, -1.0, 1.0, -1, 1);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();

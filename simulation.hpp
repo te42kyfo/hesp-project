@@ -19,11 +19,11 @@ public:
 	void writeVTK(std::ostream& outputStream);
 
 	unsigned int particleCount;
-	double dt;
-	double sigma;
-	double epsilon;
+	double dt, ks, kd;
+	double gx, gy, gz;
 	unsigned int cl_workgroup_1dsize;
 
+	int reflect_x, reflect_y, reflect_z;
 
 	cl_kernel update_velocities_kernel;
 	cl_kernel update_positions_kernel;
@@ -35,13 +35,15 @@ public:
 	OCLv3Buffer<real> vel;
 	OCLv3Buffer<real> force;
 	OCLBuffer<real> mass;
+	OCLBuffer<real> radius;
+
 	OCLBuffer<int> links;
 	OCLBuffer<int> cells;
 
 
 	double x1, y1, z1;
 	double x2, y2, z2;
-	double r_cut;
+
 	unsigned int nx, ny, nz;
 
 

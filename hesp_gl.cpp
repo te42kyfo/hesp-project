@@ -51,6 +51,7 @@ int main(int argc, char *argv[]) {
 	SDL_Event e;
 	bool quit = false;
 	double frame_time = dtime();
+	int iterations = 1;
 
 	while (!quit){
 		while (SDL_PollEvent(&e)){
@@ -77,21 +78,27 @@ int main(int argc, char *argv[]) {
 
 		double now = dtime();
 
-		std::cout << "\r" << 1.0/ ( (now-frame_time) );
+		double delta = now-frame_time;
+		std::cout << " " << 1.0/ ( delta ) << " ";
 
 		frame_time = now;
 
+		if( delta < 0.02) iterations ++;
+		if( delta > 0.03) iterations --;
 
+		if( iterations == 0) iterations = 1;
+		std::cout << iterations << "\n";
 
-		sim.step();
-		sim.step();
-		sim.step();
-		sim.step();
+		for( int i = 0; i < iterations; i++) {
+			sim.step();
+		}
+
 		sim.copyDown();
 
 		vis.drawParticles( sim.pos.x.host().data(),
 						   sim.pos.y.host().data(),
 						   sim.pos.z.host().data(),
+						   sim.radius.host().data(),
 						   sim.pos.z.host().size(),
 						   x1, y1, z1, x2, y2, z2 );
 

@@ -1,6 +1,7 @@
 #include "real.hpp"
 
 __kernel void update_positions ( const unsigned N, const real dt,
+								 int reflect_x, int reflect_y, int reflect_z,
 								 global real* px, global real* py, global real* pz,
 								 global real* vx, global real* vy, global real* vz,
 								 global real* fx, global real* fy, global real* fz,
@@ -19,6 +20,8 @@ __kernel void update_positions ( const unsigned N, const real dt,
 	real bx = (px[gid]-x1) / (x2-x1);
 	real by = (py[gid]-y1) / (y2-y1);
 	real bz = (pz[gid]-z1) / (z2-z1);
+
+
 
 	if( bx >= (real) 1.0 ) px[gid] = x1+fmod(bx, (real) 1.0) * (x2-x1);
 	if( by >= (real) 1.0 ) py[gid] = y1+fmod(by, (real) 1.0) * (y2-y1);
