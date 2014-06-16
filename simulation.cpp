@@ -45,6 +45,9 @@ Simulation::Simulation(ParfileReader& params) {
 		update_cells_kernel = ocl.buildKernel( "./update_cells.cl",
 											  "update_cells" );
 
+		render_kernel = ocl.buildKernel( "./render.cl",
+										 "render" );
+
 		readInputFile( params.getString( "part_input_file" ));
 		force = ocl.v3Buffer<real>( pos.x.host().size() );
 		links = ocl.buffer<int>( pos.x.host().size() );

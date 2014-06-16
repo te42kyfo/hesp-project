@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
 		double now = dtime();
 
 		double delta = now-frame_time;
-		std::cout << " " << 1.0/ ( delta ) << " ";
+		//		std::cout << " " << 1.0/ ( delta ) << " ";
 
 		frame_time = now;
 
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
 		if( delta > 0.03) iterations --;
 
 		if( iterations == 0) iterations = 1;
-		std::cout << iterations << "\n";
+		//std::cout << iterations << "\n";
 
 		for( int i = 0; i < iterations; i++) {
 			sim.step();

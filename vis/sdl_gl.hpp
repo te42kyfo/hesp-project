@@ -33,6 +33,7 @@ public:
 
 	// drawSlice
 	GLuint color_program;
+	GLuint sphere_program;
 
 
 };

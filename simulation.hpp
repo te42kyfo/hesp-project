@@ -18,6 +18,7 @@ public:
 	void writeASCII(std::ostream& outputStream);
 	void writeVTK(std::ostream& outputStream);
 
+
 	unsigned int particleCount;
 	double dt, ks, kd;
 	double gx, gy, gz;
@@ -31,11 +32,14 @@ public:
 	cl_kernel reset_cells_kernel;
 	cl_kernel update_cells_kernel;
 
+	cl_kernel render_kernel;
+
 	OCLv3Buffer<real> pos;
 	OCLv3Buffer<real> vel;
 	OCLv3Buffer<real> force;
 	OCLBuffer<real> mass;
 	OCLBuffer<real> radius;
+	OCLBuffer<real> image;
 
 	OCLBuffer<int> links;
 	OCLBuffer<int> cells;
