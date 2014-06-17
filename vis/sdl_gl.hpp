@@ -31,9 +31,10 @@ public:
 	SDL_GLContext  gl_context;
 	unsigned int frame_number = 0;
 
-	// drawSlice
+	
 	GLuint color_program;
 	GLuint sphere_program;
+	GLuint cubeTexture;
 
 
 };
