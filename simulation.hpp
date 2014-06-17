@@ -15,6 +15,8 @@ public:
 	void step();
 	void copyDown();
 
+	void render(size_t width, size_t height);
+
 	void writeASCII(std::ostream& outputStream);
 	void writeVTK(std::ostream& outputStream);
 
