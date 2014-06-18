@@ -37,10 +37,13 @@ int main(int argc, char *argv[]) {
 
 	Simulation	sim( params );
 
+	size_t screenWidth =  800;
+	size_t screenHeight = 600;
+
 	SdlGl vis;
 	vis.initDisplay();
-	vis.initDrawParticles();
-	vis.setViewport(800, 600);
+	vis.initDrawSlice();
+	vis.setViewport(screenWidth, screenHeight);
 
 	double x1,y1,z1,x2,y2,z2;
 	params.initDoubleList( { {"x_min", x1}, {"y_min", y1}, {"z_min", z1},
@@ -50,8 +53,6 @@ int main(int argc, char *argv[]) {
 
 	SDL_Event e;
 	bool quit = false;
-	double frame_time = dtime();
-	int iterations = 1;
 
 	while (!quit){
 		while (SDL_PollEvent(&e)){
@@ -60,7 +61,9 @@ int main(int argc, char *argv[]) {
 			}
 			if(e.type == SDL_WINDOWEVENT) {
 				if( e.window.event == SDL_WINDOWEVENT_RESIZED) {
-					vis.setViewport( e.window.data1, e.window.data2 );
+					screenWidth = e.window.data1;
+					screenHeight = e.window.data2;
+					vis.setViewport(screenWidth, screenHeight);
 				}
 			}
 			if (e.type == SDL_KEYDOWN){
@@ -76,31 +79,21 @@ int main(int argc, char *argv[]) {
 
 		}
 
-		double now = dtime();
 
-		double delta = now-frame_time;
-		//		std::cout << " " << 1.0/ ( delta ) << " ";
 
-		frame_time = now;
 
-		if( delta < 0.02) iterations ++;
-		if( delta > 0.03) iterations --;
-
-		if( iterations == 0) iterations = 1;
-		//std::cout << iterations << "\n";
-
-		for( int i = 0; i < iterations; i++) {
+		for( size_t i = 0; i< 400; i++) {
 			sim.step();
 		}
 
-		sim.copyDown();
+		double now = dtime();
+		sim.render( screenWidth/2, screenHeight/2 );
+		double rendertime = dtime()-now;
+		std::cout << " " << rendertime*1000 << "\n";
 
-		vis.drawParticles( sim.pos.x.host().data(),
-						   sim.pos.y.host().data(),
-						   sim.pos.z.host().data(),
-						   sim.radius.host().data(),
-						   sim.pos.z.host().size(),
-						   x1, y1, z1, x2, y2, z2 );
+		//		sim.copyDown();
+
+		vis.drawSlice( sim.image.host().data(), screenWidth/2, screenHeight/2 );
 
 		SDL_GL_SwapWindow( vis.window);
 	}

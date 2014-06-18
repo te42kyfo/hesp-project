@@ -54,11 +54,18 @@ public:
 
 	}
 
+
 	template<class T>
-	void copyUp( OCLBuffer<T>& buffer) {
+	void syncSizes( OCLBuffer<T>& buffer ) {
 		if( buffer.host_mem.size() == 0) return;
 
-		if( buffer.device_mem == nullptr) {
+		if( buffer.deviceCount != buffer.host_mem.size() ) {
+			if( buffer.deviceCount != 0 ) {
+				clReleaseMemObject( buffer.device_mem );
+				buffer.device_mem = nullptr;
+				buffer.deviceCount = 0;
+			}
+
 			buffer.deviceCount = buffer.host_mem.size();
 			cl_int error;
 			buffer.device_mem = clCreateBuffer( context, CL_MEM_READ_WRITE,
@@ -66,6 +73,13 @@ public:
 												nullptr, &error);
 			cl_check(error);
 		}
+	}
+
+
+	template<class T>
+	void copyUp( OCLBuffer<T>& buffer) {
+		syncSizes(buffer);
+
 		cl_check( clEnqueueWriteBuffer( queue, buffer.device_mem, CL_TRUE, 0,
 										sizeof(T) * buffer.deviceCount,
 										buffer.host().data(), 0, NULL, NULL));
@@ -121,7 +135,7 @@ private:
 				  T argument, Args... args) {
 		cl_int err =  clSetKernelArg( kernel, argument_index, sizeof(T), &argument);
 		if( err != CL_SUCCESS) {
-			std::cerr << "Argument index " << argument_index << " " << argument << "\n";
+			std::cerr << "Argument index " << argument_index << "\n";
 			cl_check(err);
 		}
 

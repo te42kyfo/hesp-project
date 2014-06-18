@@ -46,9 +46,9 @@ void SdlGl::drawSlice(float* slice_ptr, size_t width, size_t height) {
 	GLuint texId;
 	glGenTextures(1, &texId);
 	glBindTexture( GL_TEXTURE_2D, texId);
-	glTexImage2D( GL_TEXTURE_2D, 0, GL_R32F,
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB,
 				  width, height, 0,
-				  GL_RED, GL_FLOAT,
+				  GL_RGB, GL_FLOAT,
 				  slice_ptr);
 
 

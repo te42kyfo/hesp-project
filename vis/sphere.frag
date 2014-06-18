@@ -35,13 +35,13 @@ void main(void){
 	specular2 = pow( specular2, 15 );
 
 
-	vec3 cube_color1 = textureCube(tex, reflection, 1.0).rgb;
+	vec3 cube_color1 = textureCube(tex, reflection, 1.0 +r2).rgb;
 
 
 	if( r2 < 1.0f )
 		gl_FragColor =vec4( cube_color1 * 0.8 +
 							vec3(0.3, 0.3, 0.3) * ( specular1*1.0) +
-							vec3(0.3, 0.3, 0.3) * ( specular2*1.0), 10.0-r2*10.0);
+							vec3(0.3, 0.3, 0.3) * ( specular2*1.0), 8.0-r2*8.0);
 
 	else
 		gl_FragColor = vec4(0.0, 0.0, 1.0, 0.0);

@@ -150,6 +150,22 @@ void Simulation::step() {
 				 (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2);
 }
 
+
+void Simulation::render( size_t imageWidth, size_t imageHeight) {
+	image.host().resize(imageWidth*imageHeight*3);
+
+	ocl.syncSizes( image );
+
+	ocl.execute( render_kernel, 2,
+				 { (imageWidth/16+1)*16, (imageHeight/16+1)*16, 0 },
+				 { 16, 16, 0},
+				 (unsigned int) pos.x.deviceCount,
+				 pos.x.device(), pos.y.device(), pos.z.device(), image.device(),
+				 (unsigned int) imageWidth, (unsigned int) imageHeight,
+				 cl_float4{0.0, 2.0, 2.0, 0.0}, cl_float4{0.0, 0.0, -1.0, 2.0});
+	ocl.copyDown( image );
+}
+
 void Simulation::copyDown() {
 	ocl.copyDown( pos );
 	ocl.copyDown( vel );
