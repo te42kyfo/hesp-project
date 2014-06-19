@@ -1,5 +1,7 @@
 #include "ocl.hpp"
 #include "errors.hpp"
+#include <exception>
+
 
 using namespace std;
 
@@ -23,6 +25,10 @@ string clGetPlatformInfoString( cl_platform_info info_id, cl_platform_id platfor
 
 
 void OCL::init() {
+	init( "." );
+}
+
+void OCL::init(string basename) {
 	cl_platform_id ids[5];
 	cl_uint num_platforms = 0;
 
@@ -50,16 +56,18 @@ void OCL::init() {
 
 	queue = clCreateCommandQueue(context, device, 0, &error);
 	cl_check( error );
+	this->basename = basename;
 }
 
 cl_kernel OCL::buildKernel ( string filename, string kernel_name) {
 	string source;
 	try {
 		ifstream t( filename.c_str() );
+		if( !t ) throw runtime_error("Could not open file");
 		source = string( (istreambuf_iterator<char>(t)),
 						 istreambuf_iterator<char>());
 	} catch( exception& e) {
-		cout << filename << " - " << "buildKernel: " << e.what() << "\n";
+		cout  << "buildKernel: " << e.what() << " " << filename << "\n";
 		exit(1);
 	}
 
@@ -71,7 +79,11 @@ cl_kernel OCL::buildKernel ( string filename, string kernel_name) {
 													NULL, &error);
 	cl_check(error);
 
-	clBuildProgram(program, 0, NULL, "-I.", NULL, NULL);
+	string options( "-I");
+	options += basename;
+
+
+	clBuildProgram(program, 0, NULL, options.c_str(), NULL, NULL);
 
 
 

@@ -8,7 +8,7 @@
 
 class Simulation {
 public:
-	Simulation(ParfileReader& params);
+	Simulation(ParfileReader& params, char* argv0);
 
 	void readInputFile(std::string filename);
 
