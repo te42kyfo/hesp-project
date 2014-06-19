@@ -37,6 +37,7 @@ struct OCLv3Buffer {
 class OCL {
 public:
 	void init();
+	void init(std::string basename);
 
 	cl_kernel buildKernel (std::string filename, std::string kernel_name);
 
@@ -176,6 +177,7 @@ public:
 	cl_device_id device;
 	cl_context context;
 	cl_command_queue queue;
+	std::string basename;
 };
 
 #endif

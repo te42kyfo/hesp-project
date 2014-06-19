@@ -20,7 +20,7 @@ public:
 	void initDisplay();
 
 
-	void initDrawSlice();
+	void initDrawSlice( char* argv0 );
 	void drawSlice(float* slice_ptr, size_t width, size_t height);
 
 	void initDrawParticles();
@@ -31,7 +31,7 @@ public:
 	SDL_GLContext  gl_context;
 	unsigned int frame_number = 0;
 
-	
+
 	GLuint color_program;
 	GLuint sphere_program;
 	GLuint cubeTexture;

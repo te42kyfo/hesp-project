@@ -30,14 +30,14 @@ int main(int argc, char *argv[]) {
 
 	ParfileReader params(argv[1]);
 
-	Simulation	sim( params );
+	Simulation	sim( params, argv[0] );
 
 	size_t screenWidth =  800;
 	size_t screenHeight = 600;
 
 	SdlGl vis;
 	vis.initDisplay();
-	vis.initDrawSlice();
+	vis.initDrawSlice( argv[0] );
 	vis.setViewport(screenWidth, screenHeight);
 
 	double x1,y1,z1,x2,y2,z2;

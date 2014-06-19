@@ -9,12 +9,18 @@ using namespace std;
 
 
 
-void SdlGl::initDrawSlice() {
+void SdlGl::initDrawSlice(char* argv0) {
+
+
 	glShadeModel( GL_FLAT );
     glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
 	glDisable(GL_DEPTH_TEST);
 
-	color_program = loadShader( "./vis/color.vert", "./vis/color.frag" );
+	string basename( argv0 );
+	basename.erase( basename.find_last_of( "/" )  );
+	if( basename.empty() ) basename = ".";
+
+	color_program = loadShader( basename +"/vis/color.vert", basename + "/vis/color.frag" );
 
 }
 

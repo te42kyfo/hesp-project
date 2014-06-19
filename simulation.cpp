@@ -8,8 +8,15 @@
 #include "dtime.hpp"
 using namespace std;
 
-Simulation::Simulation(ParfileReader& params) {
-		ocl.init();
+Simulation::Simulation(ParfileReader& params, char* argv0) {
+
+
+		string basename( argv0 );
+		basename.erase( basename.find_last_of( "/" )  );
+		if( basename.empty() ) basename = ".";
+
+
+		ocl.init(basename);
 
 		dt = params.getDouble("timestep_length");
 		ks = params.getDouble("k_s");
@@ -31,20 +38,20 @@ Simulation::Simulation(ParfileReader& params) {
 
 		cl_workgroup_1dsize = params.getInt("cl_workgroup_1dsize");
 
-		update_velocities_kernel = ocl.buildKernel( "./update_velocities.cl",
+		update_velocities_kernel = ocl.buildKernel( basename + "/update_velocities.cl",
 													"update_velocities" );
-		update_positions_kernel = ocl.buildKernel( "./update_positions.cl",
-													"update_positions" );
-		reset_cells_kernel = ocl.buildKernel( "./reset_cells.cl",
-													"reset_cells" );
-		reset_links_kernel = ocl.buildKernel( "./reset_links.cl",
+		update_positions_kernel = ocl.buildKernel( basename + "/update_positions.cl",
+												   "update_positions" );
+		reset_cells_kernel = ocl.buildKernel( basename + "/reset_cells.cl",
+											  "reset_cells" );
+		reset_links_kernel = ocl.buildKernel( basename + "/reset_links.cl",
 											  "reset_links" );
-		update_cells_kernel = ocl.buildKernel( "./update_cells.cl",
-											  "update_cells" );
-		density_field_kernel = ocl.buildKernel( "./density_field.cl",
-											   "density_field" );
-		raymarch_kernel = ocl.buildKernel( "./raymarch.cl",
-											   "raymarch" );
+		update_cells_kernel = ocl.buildKernel( basename + "/update_cells.cl",
+											   "update_cells" );
+		density_field_kernel = ocl.buildKernel( basename + "/density_field.cl",
+												"density_field" );
+		raymarch_kernel = ocl.buildKernel( basename + "/raymarch.cl",
+										   "raymarch" );
 
 		readInputFile( params.getString( "part_input_file" ));
 		force = ocl.v3Buffer<real>( pos.x.host().size() );

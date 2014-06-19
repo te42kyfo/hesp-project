@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
 	double dt = params.getDouble( "timestep_length" );
 
 
-	Simulation	sim( params );
+	Simulation	sim( params, argv[0] );
 
 
 	double t = 0;
