@@ -153,7 +153,7 @@ void Simulation::render( size_t imageWidth, size_t imageHeight) {
 
 	double t1 = dtime();
 
-	unsigned int xcount = 128;
+	unsigned int xcount = 64;
 	unsigned int ycount = xcount * ((y2-y1)/(x2-x1));
 	unsigned int zcount = xcount * ((z2-z1)/(x2-x1));
 

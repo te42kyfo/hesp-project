@@ -27,42 +27,12 @@ __kernel void raymarch( global real* density_field,
 	float ihz = 1.0 / hz;
 
 
-	float tx1 = (xmin - origin.x) / dir.x;
-	float tx2 = (xmax - origin.x) / dir.x;
-	float ty1 = (ymin - origin.y) / dir.y;
-	float ty2 = (ymax - origin.y) / dir.y;
-	float tz1 = (zmin - origin.z) / dir.z;
-	float tz2 = (zmax - origin.z) / dir.z;
-
-
-
-	float tx;
-	float ty;
-	float tz;
-
-	if( tx1 < 0) tx1 = 0;
-	if( ty1 < 0) ty1 = 0;
-	if( tz1 < 0) tz1 = 0;
-	if( tx2 < 0) tx2 = 0;
-	if( ty2 < 0) ty2 = 0;
-	if( tz2 < 0) tz2 = 0;
-
-
-	if( tx1 < tx2) {
-		tx = tx1;
-	} else {
-		tx = tx2;
-	}
-	if( ty1 < ty2) {
-		ty = ty1;
-	} else {
-		ty = ty2;
-	}
-	if( tz1 < tz2) {
-		tz = tz1;
-	} else {
-		tz = tz2;
-	}
+	float tx = min( max( 0.0f, (xmin - origin.x) / dir.x),
+					max( 0.0f, (xmax - origin.x) / dir.x) );
+	float ty = min( max( 0.0f, (ymin - origin.y) / dir.y),
+					max( 0.0f, (ymax - origin.y) / dir.y) );
+	float tz = min( max( 0.0f, (zmin - origin.z) / dir.z),
+					max( 0.0f, (zmax - origin.z) / dir.z));
 
 	float t0 = max(tx, max(tz, ty));
 
@@ -90,12 +60,12 @@ __kernel void raymarch( global real* density_field,
 		if( ix < xcount-1 && iy < ycount-1 && iz < zcount-1 &&
 			ix > 0 && iy >0 && iz >0) {
 
-			float fracx = (cx-xmin-ix*hx)*ihx;
-			float fracy = (cy-xmin-iy*hy)*ihy;
-			float fracz = (cz-xmin-iz*hz)*ihz;
+			float fracx = fmod((cx - xmin)*ihx, 1.0f);
+			float fracy = fmod((cy - ymin)*ihy, 1.0f);
+			float fracz = fmod((cz - zmin)*ihz, 1.0f);
 
 
-			unsigned int idx = ix + iy*xcount + iz*xcount*ycount;
+				unsigned int idx = ix + iy*xcount + iz*xcount*ycount;
 
 			float d000 = density_field[ idx                         ];
 			float d001 = density_field[ idx+1                       ];
@@ -144,7 +114,7 @@ __kernel void raymarch( global real* density_field,
 		cz = cz + t*dir.z;
 
 	}
-
+	
 
 
 }

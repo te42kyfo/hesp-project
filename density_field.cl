@@ -28,7 +28,6 @@ __kernel void density_field( const unsigned particleCount,
 		density_field[globalid] += 1.0 / (dx*dx+dy*dy+dz*dz);
 	}
 
-	
 
 
 }
