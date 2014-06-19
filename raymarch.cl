@@ -76,13 +76,8 @@ __kernel void raymarch( global real* density_field,
 			float d110 = density_field[ idx   +xcount +ycount*xcount];
 			float d111 = density_field[ idx+1 +xcount +ycount*xcount];
 
-			density =
-				fracz*
-				(( d111*fracx + d110*(1.0-fracx) ) *fracy +
-				 ( d101*fracx + d100*(1.0-fracx) ) *(1.0-fracy))+
-				(1.0-fracz)*
-				(( d011*fracx + d010*(1.0-fracx) ) *fracy +
-				 ( d001*fracx + d000*(1.0-fracx) ) *(1.0-fracy));
+			density = mix( mix ( mix(d000, d001, fracx), mix(d010, d011, fracx), fracy),
+						   mix ( mix(d100, d101, fracx), mix(d110, d111, fracx), fracy), fracz);
 
 
 			if( density > 4.0 ) {
