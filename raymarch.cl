@@ -27,31 +27,45 @@ __kernel void raymarch( global real* density_field,
 	float ihz = 1.0 / hz;
 
 
-	float tx = min( max( 0.0f, (xmin - origin.x) / dir.x),
+	float tx0 = min( max( 0.0f, (xmin - origin.x) / dir.x),
 					max( 0.0f, (xmax - origin.x) / dir.x) );
-	float ty = min( max( 0.0f, (ymin - origin.y) / dir.y),
+	float ty0 = min( max( 0.0f, (ymin - origin.y) / dir.y),
 					max( 0.0f, (ymax - origin.y) / dir.y) );
-	float tz = min( max( 0.0f, (zmin - origin.z) / dir.z),
+	float tz0 = min( max( 0.0f, (zmin - origin.z) / dir.z),
 					max( 0.0f, (zmax - origin.z) / dir.z));
-
-	float t0 = max(tx, max(tz, ty));
+	float t0 = max(tx0, max(tz0, ty0));
 
 
 	float cx = origin.x + t0*dir.x;
 	float cy = origin.y + t0*dir.y;
 	float cz = origin.z + t0*dir.z;
 
+
+	float step_x = hx/fabs( dir.x );
+	float step_y = hy/fabs( dir.y );
+	float step_z = hz/fabs( dir.z );
+
+	int ix = (cx-xmin) *ihx;
+	int iy = (cy-ymin) *ihy;
+	int iz = (cz-zmin) *ihz;
+
 	image[globalid+0] = 0.0;
 	image[globalid+1] = 0.0;
 	image[globalid+2] = 0.10;
 
+	float t = t0;
 
+	float tx = (xmin + (ix+sign(dir.x))*hx -cx)/dir.x;
+	float ty = (ymin + (iy+sign(dir.y))*hy -cy)/dir.y;
+	float tz = (zmin + (iz+sign(dir.z))*hz -cz)/dir.z;
+
+	if( isnan(tx) ) tx = INFINITY;
+	if( isnan(ty) ) ty = INFINITY;
+	if( isnan(tz) ) tz = INFINITY;
 
 	while(true) {
 
-		int ix = (cx-xmin) *ihx;
-		int iy = (cy-ymin) *ihy;
-		int iz = (cz-zmin) *ihz;
+
 
 		if( ix < 0 || ix >= xcount || iy < 0 || iy >= ycount || iz<0 || iz >= zcount) break;
 
@@ -64,8 +78,7 @@ __kernel void raymarch( global real* density_field,
 			float fracy = fmod((cy - ymin)*ihy, 1.0f);
 			float fracz = fmod((cz - zmin)*ihz, 1.0f);
 
-
-				unsigned int idx = ix + iy*xcount + iz*xcount*ycount;
+			unsigned int idx = ix + iy*xcount + iz*xcount*ycount;
 
 			float d000 = density_field[ idx                         ];
 			float d001 = density_field[ idx+1                       ];
@@ -95,18 +108,41 @@ __kernel void raymarch( global real* density_field,
 				image[globalid+2] = nx*-1.0 + ny*0.5 + nz*0;;
 				break;
 			}
+			}
+
+
+		float temp_tx = tx;
+		float temp_ty = ty;
+		float temp_tz = tz;
+
+		float next_step;
+		if( tx < ty && tx < tz) {
+			next_step = tx;
+			ix += sign(dir.x);
+			tx += step_x;
+		} else if( ty < tz ) {
+			next_step = ty;
+			iy += sign(dir.y);
+			ty += step_y;
+		} else {
+			next_step = tz;
+			iz += sign(dir.z);
+			tz += step_z;
 		}
 
-		float tx = (xmin + (ix+sign(dir.x))*hx -cx)/dir.x;
-		float ty = (ymin + (iy+sign(dir.y))*hy -cy)/dir.y;
-		float tz = (zmin + (iz+sign(dir.z))*hz -cz)/dir.z;
+
+		t += next_step;
+		tx -= next_step;
+		ty -= next_step;
+		tz -= next_step;
+
+		//	printf( "%f, %f, %f | %f | %f, %f, %f\n", temp_tx, temp_ty, temp_tz, next_step,
+		//		tx, ty, tz);
 
 
-		float t = min(tx, min(ty, tz));
-
-		cx = cx + t*dir.x;
-		cy = cy + t*dir.y;
-		cz = cz + t*dir.z;
+		cx += next_step*dir.x;
+		cy += next_step*dir.y;
+		cz += next_step*dir.z;
 
 	}
 	
