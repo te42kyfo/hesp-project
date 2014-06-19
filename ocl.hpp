@@ -23,6 +23,7 @@ struct OCLBuffer {
 	cl_mem device() { return device_mem; };
 
 	size_t deviceCount = 0;
+	unsigned int width, height, depth;
 };
 
 template<class T>
@@ -38,6 +39,25 @@ public:
 	void init();
 
 	cl_kernel buildKernel (std::string filename, std::string kernel_name);
+
+
+
+	OCLBuffer<float> image3D( size_t width, size_t height, size_t depth) {
+		OCLBuffer<float> result;
+		result.width = width;
+		result.height= height;
+		result.depth = depth;
+
+		cl_int errorCode;
+		const cl_image_format format = { CL_R, CL_FLOAT };
+		const cl_image_desc desc = { CL_MEM_OBJECT_IMAGE3D,
+									 width, height, depth, 1, 0, 0, 0, 0, 0 };
+
+		result.device_mem = clCreateImage( context, CL_MEM_HOST_NO_ACCESS, &format,
+										   &desc, nullptr, &errorCode);
+		cl_check( errorCode );
+		return result;
+	}
 
 	template<class T>
 	OCLBuffer<T> buffer( size_t elements ) {
@@ -118,6 +138,9 @@ public:
 		this->copyDown( buffer.z );
 	}
 
+	void finish() {
+		clFinish(queue);
+	}
 
 private:
 	void execute_t( size_t argument_index, cl_kernel kernel, size_t dim,

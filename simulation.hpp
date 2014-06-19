@@ -34,14 +34,18 @@ public:
 	cl_kernel reset_cells_kernel;
 	cl_kernel update_cells_kernel;
 
-	cl_kernel render_kernel;
+	cl_kernel density_field_kernel;
+	cl_kernel raymarch_kernel;
 
 	OCLv3Buffer<real> pos;
 	OCLv3Buffer<real> vel;
 	OCLv3Buffer<real> force;
+
 	OCLBuffer<real> mass;
 	OCLBuffer<real> radius;
 	OCLBuffer<real> image;
+	OCLBuffer<real> density_field;
+
 
 	OCLBuffer<int> links;
 	OCLBuffer<int> cells;

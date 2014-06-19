@@ -6,22 +6,17 @@
 #include <cstdio>
 #include <random>
 #include <algorithm>
-#include <sys/time.h>
+
 
 #include "vis/sdl_gl.hpp"
 #include "simulation.hpp"
 #include "parfile_reader.hpp"
+#include "dtime.hpp"
 
 using namespace std;
 
 
-double dtime() {
-	double tseconds = 0;
-	struct timeval t;
-	gettimeofday( &t, NULL);
-	tseconds = (double) t.tv_sec + (double) t.tv_usec*1.0e-6;
-	return tseconds;
-}
+
 
 
 int main(int argc, char *argv[]) {
@@ -81,19 +76,21 @@ int main(int argc, char *argv[]) {
 
 
 
-
-		for( size_t i = 0; i< 400; i++) {
+		double t1 = dtime();
+		for( size_t i = 0; i< 40; i++) {
 			sim.step();
 		}
+		double t2 = dtime();
 
-		double now = dtime();
-		sim.render( screenWidth/2, screenHeight/2 );
-		double rendertime = dtime()-now;
-		std::cout << " " << rendertime*1000 << "\n";
+		cout << fixed << (t2-t1)*1000 << " ";
 
-		//		sim.copyDown();
+		sim.render( screenWidth, screenHeight);
+		double t3 = dtime();
+		cout << fixed << (t3-t2)*1000 << " ";
 
-		vis.drawSlice( sim.image.host().data(), screenWidth/2, screenHeight/2 );
+		vis.drawSlice( sim.image.host().data(), screenWidth, screenHeight );
+		double t4 = dtime();
+		cout << fixed << (t4-t3)*1000 << "\n";
 
 		SDL_GL_SwapWindow( vis.window);
 	}

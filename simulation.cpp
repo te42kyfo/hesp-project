@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <iterator>
+#include "dtime.hpp"
 using namespace std;
 
 Simulation::Simulation(ParfileReader& params) {
@@ -32,21 +33,18 @@ Simulation::Simulation(ParfileReader& params) {
 
 		update_velocities_kernel = ocl.buildKernel( "./update_velocities.cl",
 													"update_velocities" );
-
 		update_positions_kernel = ocl.buildKernel( "./update_positions.cl",
 													"update_positions" );
-
 		reset_cells_kernel = ocl.buildKernel( "./reset_cells.cl",
 													"reset_cells" );
-
 		reset_links_kernel = ocl.buildKernel( "./reset_links.cl",
 											  "reset_links" );
-
 		update_cells_kernel = ocl.buildKernel( "./update_cells.cl",
 											  "update_cells" );
-
-		render_kernel = ocl.buildKernel( "./render.cl",
-										 "render" );
+		density_field_kernel = ocl.buildKernel( "./density_field.cl",
+											   "density_field" );
+		raymarch_kernel = ocl.buildKernel( "./raymarch.cl",
+											   "raymarch" );
 
 		readInputFile( params.getString( "part_input_file" ));
 		force = ocl.v3Buffer<real>( pos.x.host().size() );
@@ -150,20 +148,54 @@ void Simulation::step() {
 				 (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2);
 }
 
-
 void Simulation::render( size_t imageWidth, size_t imageHeight) {
+
+
+	double t1 = dtime();
+
+	unsigned int xcount = 128;
+	unsigned int ycount = xcount * ((y2-y1)/(x2-x1));
+	unsigned int zcount = xcount * ((z2-z1)/(x2-x1));
+
 	image.host().resize(imageWidth*imageHeight*3);
+	density_field.host().resize( xcount*ycount*zcount );
+
+
+	ocl.syncSizes( density_field );
+
+	size_t global_x_size = (xcount/8+1)*8;
+	size_t global_y_size = (ycount/8+1)*8;
+	size_t global_z_size = (zcount/8+1)*8;
+
+	ocl.execute( density_field_kernel, 3,
+				 { global_x_size, global_y_size, global_z_size },
+				 { 8, 8, 8},
+				 (unsigned int) pos.x.deviceCount,
+				 pos.x.device(), pos.y.device(), pos.z.device(), density_field.device(),
+				 xcount, ycount, zcount,
+				 (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2);
+
+
+	ocl.finish();
+	double t2 = dtime();
+	cout << " . " << (t2-t1)*1000 << " ";
 
 	ocl.syncSizes( image );
 
-	ocl.execute( render_kernel, 2,
+	ocl.execute( raymarch_kernel, 2,
 				 { (imageWidth/16+1)*16, (imageHeight/16+1)*16, 0 },
 				 { 16, 16, 0},
-				 (unsigned int) pos.x.deviceCount,
-				 pos.x.device(), pos.y.device(), pos.z.device(), image.device(),
-				 (unsigned int) imageWidth, (unsigned int) imageHeight,
-				 cl_float4{0.0, 2.0, 2.0, 0.0}, cl_float4{0.0, 0.0, -1.0, 2.0});
+				 density_field.device(),
+				 xcount, ycount, zcount,
+				 (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2,
+				 image.device(), (unsigned int) imageWidth, (unsigned int) imageHeight,
+				 cl_float4{0.0, 0.0, -4.0, 0.0}, cl_float4{0.0, 0.0, 1.0, 2.0});
+
 	ocl.copyDown( image );
+
+	double t3 = dtime();
+	cout << 1000*(t3-t2) << " . ";
+
 }
 
 void Simulation::copyDown() {
