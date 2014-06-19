@@ -63,11 +63,13 @@ cl_kernel OCL::buildKernel ( string filename, string kernel_name) {
 	string source;
 	try {
 		ifstream t( filename.c_str() );
-		if( !t ) throw runtime_error("Could not open file");
+		if( !t ) {
+			cout  << "buildKernel: Could not open " << filename << "\n";
+			exit(1);
+		}
 		source = string( (istreambuf_iterator<char>(t)),
 						 istreambuf_iterator<char>());
 	} catch( exception& e) {
-		cout  << "buildKernel: " << e.what() << " " << filename << "\n";
 		exit(1);
 	}
 
