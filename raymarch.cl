@@ -27,6 +27,41 @@ float sample( global real* image, unsigned int xcount, unsigned int ycount, unsi
 				mix ( mix(d100, d101, fracx), mix(d110, d111, fracx), fracy), fracz);
 }
 
+float3 calculateNormal( global real* density_field,
+						unsigned int xcount, unsigned int ycount, unsigned int zcount,
+						float cx, float cy, float cz,
+						float xmin, float ymin, float zmin,
+						float hx, float hy, float hz,
+						float ihx, float ihy, float ihz) {
+	float3 normal;
+	normal.x = ( sample( density_field, xcount, ycount, zcount,
+						 (cx+hx-xmin)*ihx,
+						 (cy-ymin)*ihy,
+						 (cz-zmin)*ihz) -
+				 sample( density_field, xcount, ycount, zcount,
+						 (cx-hx-xmin)*ihx,
+						 (cy-ymin)*ihy,
+						 (cz-zmin)*ihz))*0.5 ;
+	normal.y = ( sample( density_field, xcount, ycount, zcount,
+						 (cx-xmin)*ihx,
+						 (cy+hy-ymin)*ihy,
+						 (cz-zmin)*ihz) -
+				 sample( density_field, xcount, ycount, zcount,
+						 (cx-xmin)*ihx,
+						 (cy-hy-ymin)*ihy,
+						 (cz-zmin)*ihz))*0.5 ;
+	normal.z = ( sample( density_field, xcount, ycount, zcount,
+						 (cx-xmin)*ihx,
+						 (cy-ymin)*ihy,
+						 (cz+hz-zmin)*ihz) -
+				 sample( density_field, xcount, ycount, zcount,
+						 (cx-xmin)*ihx,
+						 (cy-ymin)*ihy,
+						 (cz-hz-zmin)*ihz))*0.5 ;
+	return normal;
+
+}
+
 
 __kernel void raymarch( global real* density_field,
 						unsigned int xcount, unsigned int ycount, unsigned int zcount,
@@ -94,9 +129,9 @@ __kernel void raymarch( global real* density_field,
 	float stepsize = min( step_x, min(step_y, step_z));
 
 
-	image[globalid+0] = 0.5f;
-	image[globalid+1] = 0.5f;
-	image[globalid+2] = 0.5f;
+	image[globalid+0] = 0.f;
+	image[globalid+1] = 0.f;
+	image[globalid+2] = 0.f;
 
 	float last_density = 0;
 
@@ -116,36 +151,13 @@ __kernel void raymarch( global real* density_field,
 				float fine_cy = cy - fine_t*stepsize*dir.y;
 				float fine_cz = cz - fine_t*stepsize*dir.z;
 
+				float3 normal = calculateNormal( density_field, xcount, ycount, zcount,
+												 fine_cx, fine_cy, fine_cz,
+												 xmin, ymin, zmin, hx, hy, hz, ihx, ihy, ihz );
 
-
-				float nx = ( sample( density_field, xcount, ycount, zcount,
-									 (fine_cx+hx-xmin)*ihx,
-									 (fine_cy-ymin)*ihy,
-									 (fine_cz-zmin)*ihz) -
-							 sample( density_field, xcount, ycount, zcount,
-									 (fine_cx-hx-xmin)*ihx,
-									 (fine_cy-ymin)*ihy,
-									 (fine_cz-zmin)*ihz))*0.5 ;
-				float ny = ( sample( density_field, xcount, ycount, zcount,
-									 (fine_cx-xmin)*ihx,
-									 (fine_cy+hy-ymin)*ihy,
-									 (fine_cz-zmin)*ihz) -
-							 sample( density_field, xcount, ycount, zcount,
-									 (fine_cx-xmin)*ihx,
-									 (fine_cy-hy-ymin)*ihy,
-									 (fine_cz-zmin)*ihz))*0.5 ;
-				float nz = ( sample( density_field, xcount, ycount, zcount,
-									 (fine_cx-xmin)*ihx,
-									 (fine_cy-ymin)*ihy,
-									 (fine_cz+hz-zmin)*ihz) -
-							 sample( density_field, xcount, ycount, zcount,
-									 (fine_cx-xmin)*ihx,
-									 (fine_cy-ymin)*ihy,
-									 (fine_cz-hz-zmin)*ihz))*0.5 ;
-
-				image[globalid+0] = (nx+1.0)*0.5; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
-				image[globalid+1] = (ny+1.0)*0.5; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
-				image[globalid+2] = (nz+1.0)*0.5; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
+				image[globalid+0] = (normal.x+1.0)*0.5; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
+				image[globalid+1] = (normal.y+1.0)*0.5; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
+				image[globalid+2] = (normal.z+1.0)*0.5; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
 				break;
 			}
 
