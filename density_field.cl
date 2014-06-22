@@ -12,7 +12,16 @@ __kernel void density_field( const unsigned particleCount,
 	size_t gidz = get_global_id(2);
 
 	if( gidx >= xcount || gidy >= ycount || gidz >= zcount) return;
+
 	size_t globalid = (gidz*xcount*ycount + gidy*xcount +gidx);
+
+	if( gidx == xcount-1 || gidy == ycount-1 || gidz == zcount-1 ||
+		gidx == 0 || gidy == 0 || gidz == 0 ) {
+		density_field[globalid] = 0;
+		return;
+	}
+
+
 
 
 	float cellx = xmin + (float) gidx/xcount * (xmax-xmin);
