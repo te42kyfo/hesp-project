@@ -62,6 +62,37 @@ float3 calculateNormal( global real* density_field,
 
 }
 
+float3 shade( float3 normal, float3 incoming) {
+
+	float3 light1 = { 1.0, -0.4, 2.0 };
+	float3 light2 = { -1.0, 0.0, 0.2 };
+
+	light1 = normalize( light1 );
+	light2 = normalize( light2 );
+	incoming = normalize( incoming );
+
+
+	float3 reflection =  -(incoming - 2.0f *normal* dot( incoming, normal ));
+
+	float lambert1 = dot( light1, normal );
+	float specular1 = dot( light1, reflection );
+	float lambert2 = dot( light2, normal );
+	float specular2 = dot( light2, reflection );
+
+	lambert1 = max(lambert1, 0.0f);
+	specular1 = max(specular1, 0.0f);
+	lambert2 = max(lambert2, 0.0f);
+	specular2 = max(specular2, 0.0f);
+
+
+	specular1 = pow( specular1, 60);
+	specular2 = pow( specular2, 60);
+
+	float3 color1 = { specular1, specular1, lambert1+specular1};
+	float3 color2 = { specular2, lambert2+specular2, specular2};
+
+	return color1+color2;
+}
 
 __kernel void raymarch( global real* density_field,
 						unsigned int xcount, unsigned int ycount, unsigned int zcount,
@@ -144,8 +175,8 @@ __kernel void raymarch( global real* density_field,
 									(cx-xmin)*ihx, (cy-ymin)*ihy, (cz-zmin)*ihz);
 
 
-			if( density > 60.0f ) {
-				float fine_t = ( density-60.0f) / (density-last_density);
+			if( density > 150.0f ) {
+				float fine_t = ( density-150.0f) / (density-last_density);
 
 				float fine_cx = cx - fine_t*stepsize*dir.x;
 				float fine_cy = cy - fine_t*stepsize*dir.y;
@@ -155,10 +186,14 @@ __kernel void raymarch( global real* density_field,
 												 fine_cx, fine_cy, fine_cz,
 												 xmin, ymin, zmin, hx, hy, hz, ihx, ihy, ihz );
 
-				normal = normalize( normal);
-				image[globalid+0] = (normal.x+1.0)*0.5; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
-				image[globalid+1] = (normal.y+1.0)*0.5; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
-				image[globalid+2] = (normal.z+1.0)*0.5; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
+
+				
+
+
+				float3 color = shade( normalize( normal), dir.xyz );
+				image[globalid+0] = color.x; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
+				image[globalid+1] = color.y; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
+				image[globalid+2] = color.z; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
 				break;
 			}
 

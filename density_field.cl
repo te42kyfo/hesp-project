@@ -33,31 +33,18 @@ __kernel void density_field( const unsigned particleCount,
 	float cellz = zmin + (float) gidz/zcount * (zmax-zmin);
 
 
+	density_field[globalid] = 0.0f;
 
-	for( unsigned int i = 0; i < particleCount / totalLocalSize + 1; i++) {
-		if( i*totalLocalSize + localid < particleCount) {
-			float dx = px[i*totalLocalSize + localid] - cellx;
-			float dy = py[i*totalLocalSize + localid] - celly;
-			float dz = pz[i*totalLocalSize + localid] - cellz;
-			float d = dx*dx+dy*dy+dz*dz;
-			preCheck[localid] = 0;
-			if( d < 20.0 ) {
-				preCheck[localidy] = 1;
-			}
-		}
-		barrier( CLK_LOCAL_MEM_FENCE );
-
-		for( unsigned int n = 0; n < totalLocalSize; n++) {
-			size_t current_idx = i*totalLocalSize + n;
-			if( preCheck[0] != 0 ) {
-			//			float dx = px[current_idx] - cellx;
-			//		float dy = py[current_idx] - celly;
-			//	float dz = pz[current_idx] - cellz;
-			//	float d = dx*dx+dy*dy+dz*dz;
-				density_field[globalid] = localid;
-			}
+	for( unsigned int i = 0; i < particleCount; i++) {
+		float dx = px[i] - cellx;
+		float dy = py[i] - celly;
+		float dz = pz[i] - cellz;
+		float d = dx*dx+dy*dy+dz*dz;
+		if( d < 20.0 ) {
+			density_field[globalid] += 1.0f/d;
 		}
 	}
+	
 
 
 

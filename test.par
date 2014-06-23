@@ -1,6 +1,6 @@
 part_input_file       test.in
 time_end              40.0
-timestep_length       0.0001
+timestep_length       0.0002
 part_out_freq         100000
 part_out_name_base    test_
 vtk_out_freq          3000
@@ -10,7 +10,7 @@ cl_workgroup_3dsize_x 8
 cl_workgroup_3dsize_y 4
 cl_workgroup_3dsize_z 4
 k_s                   30000
-k_d                   400
+k_d                   10
 x_min                 -2
 y_min                 -2
 z_min                 -2
@@ -24,5 +24,5 @@ reflect_x             1
 reflect_y             1
 reflect_z             1
 g_x                   0
-g_y                   -0.1
+g_y                   -100.0
 g_z                   0
