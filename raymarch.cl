@@ -144,8 +144,8 @@ __kernel void raymarch( global real* density_field,
 									(cx-xmin)*ihx, (cy-ymin)*ihy, (cz-zmin)*ihz);
 
 
-			if( density > 4.0f ) {
-				float fine_t = ( density-4.0f) / (density-last_density);
+			if( density > 60.0f ) {
+				float fine_t = ( density-60.0f) / (density-last_density);
 
 				float fine_cx = cx - fine_t*stepsize*dir.x;
 				float fine_cy = cy - fine_t*stepsize*dir.y;
@@ -155,6 +155,7 @@ __kernel void raymarch( global real* density_field,
 												 fine_cx, fine_cy, fine_cz,
 												 xmin, ymin, zmin, hx, hy, hz, ihx, ihy, ihz );
 
+				normal = normalize( normal);
 				image[globalid+0] = (normal.x+1.0)*0.5; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
 				image[globalid+1] = (normal.y+1.0)*0.5; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
 				image[globalid+2] = (normal.z+1.0)*0.5; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;

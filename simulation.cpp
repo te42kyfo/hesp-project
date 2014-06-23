@@ -160,25 +160,27 @@ void Simulation::render( size_t imageWidth, size_t imageHeight) {
 
 	double t1 = dtime();
 
-	unsigned int xcount = 32;
+	unsigned int xcount = 128;
 	unsigned int ycount = xcount * ((y2-y1)/(x2-x1));
 	unsigned int zcount = xcount * ((z2-z1)/(x2-x1));
 
 	image.host().resize(imageWidth*imageHeight*3);
 	density_field.host().resize( xcount*ycount*zcount );
 
+	size_t local3DSize = 8;
 
 	ocl.syncSizes( density_field );
 
-	size_t global_x_size = (xcount/8+1)*8;
-	size_t global_y_size = (ycount/8+1)*8;
-	size_t global_z_size = (zcount/8+1)*8;
+	size_t global_x_size = (xcount/local3DSize+1)*local3DSize;
+	size_t global_y_size = (ycount/local3DSize+1)*local3DSize;
+	size_t global_z_size = (zcount/local3DSize+1)*local3DSize;
 
 	ocl.execute( density_field_kernel, 3,
 				 { global_x_size, global_y_size, global_z_size },
-				 { 8, 8, 8},
+				 { local3DSize, local3DSize, local3DSize},
 				 (unsigned int) pos.x.deviceCount,
 				 pos.x.device(), pos.y.device(), pos.z.device(), density_field.device(),
+				 localMemory { local3DSize*local3DSize*local3DSize *sizeof(unsigned int) },
 				 xcount, ycount, zcount,
 				 (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2);
 

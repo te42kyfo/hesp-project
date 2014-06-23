@@ -77,18 +77,18 @@ int main(int argc, char *argv[]) {
 
 
 		double t1 = dtime();
-		for( size_t i = 0; i< 100; i++) {
+		for( size_t i = 0; i< 20; i++) {
 			sim.step();
 		}
 		double t2 = dtime();
 
 		cout << fixed << (t2-t1)*1000 << " ";
 
-		sim.render( screenWidth/2, screenHeight/2);
+		sim.render( screenWidth, screenHeight);
 		double t3 = dtime();
 		cout << fixed << (t3-t2)*1000 << " ";
 
-		vis.drawSlice( sim.image.host().data(), screenWidth/2, screenHeight/2 );
+		vis.drawSlice( sim.image.host().data(), screenWidth, screenHeight );
 		double t4 = dtime();
 		cout << fixed << (t4-t3)*1000 << " ";
 		cout << fixed << (t4 - totalFrametime )*1000 << "\n";
