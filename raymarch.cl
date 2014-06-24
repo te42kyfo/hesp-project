@@ -89,7 +89,7 @@ float3 shade( float3 normal, float3 incoming) {
 	specular2 = pow( specular2, 60);
 
 	float3 color1 = { specular1, specular1, lambert1+specular1};
-	float3 color2 = { specular2, lambert2+specular2, specular2};
+	float3 color2 = { specular2+lambert2, specular2, specular2};
 
 	return color1+color2;
 }
@@ -127,12 +127,12 @@ __kernel void raymarch( global real* density_field,
 
 
 
-	float tx0 = min( max( 0.0f, (xmin - origin.x) / dir.x),
-					max( 0.0f, (xmax - origin.x) / dir.x) );
-	float ty0 = min( max( 0.0f, (ymin - origin.y) / dir.y),
-					max( 0.0f, (ymax - origin.y) / dir.y) );
-	float tz0 = min( max( 0.0f, (zmin - origin.z) / dir.z),
-					max( 0.0f, (zmax - origin.z) / dir.z));
+	float tx0 = min( max( 0.0f, (xmin +hx - origin.x) / dir.x),
+					max( 0.0f, (xmax  -hx- origin.x) / dir.x) );
+	float ty0 = min( max( 0.0f, (ymin +hy - origin.y) / dir.y),
+					max( 0.0f, (ymax -hy - origin.y) / dir.y) );
+	float tz0 = min( max( 0.0f, (zmin +hx - origin.z) / dir.z),
+					max( 0.0f, (zmax - hz- origin.z) / dir.z));
 	float t0 = max(tx0, max(tz0, ty0));
 
 
@@ -166,7 +166,7 @@ __kernel void raymarch( global real* density_field,
 
 	float last_density = 0;
 
-	while( ix >= 0 && ix < xcount && iy >= 0 && iy < ycount && iz >= 0 && iz < zcount ) {
+	while( ix > 0 && ix < xcount-1 && iy > 0 && iy < ycount-1 && iz > 0 && iz < zcount-1 ) {
 
 		if( ix < xcount-1 && iy < ycount-1 && iz < zcount-1 &&
 			ix > 0 && iy >0 && iz >0) {
@@ -175,8 +175,8 @@ __kernel void raymarch( global real* density_field,
 									(cx-xmin)*ihx, (cy-ymin)*ihy, (cz-zmin)*ihz);
 
 
-			if( density > 150.0f ) {
-				float fine_t = ( density-150.0f) / (density-last_density);
+			if( density > 100.0f ) {
+				float fine_t = ( density-100.0f) / (density-last_density);
 
 				float fine_cx = cx - fine_t*stepsize*dir.x;
 				float fine_cy = cy - fine_t*stepsize*dir.y;
@@ -187,7 +187,7 @@ __kernel void raymarch( global real* density_field,
 												 xmin, ymin, zmin, hx, hy, hz, ihx, ihy, ihz );
 
 
-				
+
 
 
 				float3 color = shade( normalize( normal), dir.xyz );

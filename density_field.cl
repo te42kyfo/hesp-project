@@ -22,29 +22,34 @@ __kernel void density_field( const unsigned particleCount,
 	size_t totalLocalSize = lxsize*lysize*lzsize;
 
 	size_t localid = lidx + lidy*lxsize + lidz*lxsize*lysize;
+	size_t globalid = (gidz*xcount*ycount + gidy*xcount +gidx);
 
 	if( gidx >= xcount || gidy >= ycount || gidz >= zcount) return;
 
-	size_t globalid = (gidz*xcount*ycount + gidy*xcount +gidx);
+	density_field[globalid] = 0;
+
+	if( gidx < xcount-1 && gidy < ycount-1 && gidz < zcount &&
+		gidx > 0 && gidy > 0 && gidz > 0)  {
 
 
-	float cellx = xmin + (float) gidx/xcount * (xmax-xmin);
-	float celly = ymin + (float) gidy/ycount * (ymax-ymin);
-	float cellz = zmin + (float) gidz/zcount * (zmax-zmin);
+
+		float cellx = xmin + (float) gidx/xcount * (xmax-xmin);
+		float celly = ymin + (float) gidy/ycount * (ymax-ymin);
+		float cellz = zmin + (float) gidz/zcount * (zmax-zmin);
 
 
-	density_field[globalid] = 0.0f;
+		density_field[globalid] = 0.0f;
 
-	for( unsigned int i = 0; i < particleCount; i++) {
-		float dx = px[i] - cellx;
-		float dy = py[i] - celly;
-		float dz = pz[i] - cellz;
-		float d = dx*dx+dy*dy+dz*dz;
-		if( d < 20.0 ) {
-			density_field[globalid] += 1.0f/d;
+		for( unsigned int i = 0; i < particleCount; i++) {
+			float dx = px[i] - cellx;
+			float dy = py[i] - celly;
+			float dz = pz[i] - cellz;
+			float d = dx*dx+dy*dy+dz*dz;
+			if( d < 20.0 ) {
+				density_field[globalid] += 1.0f/d;
+			}
 		}
 	}
-	
 
 
 

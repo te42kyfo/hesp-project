@@ -81,16 +81,9 @@ void Simulation::readInputFile(std::string filename) {
 	while( getline(infile, line) ) {
 		istringstream line_stream(line);
 
-		string mass_string;
-		line_stream >> mass_string;
-		if( mass_string == "inf" ) {
-			mass.host().push_back( std::numeric_limits<real>::infinity() );
-		} else {
-			mass.host().push_back( stod( mass_string ) );
-		}
-
 		istream_iterator<double> it( line_stream );
 
+		mass.host().push_back( *it++ );
 		radius.host().push_back(  *it++ );
 		pos.x.host().push_back(  *it++ );
 		pos.y.host().push_back(  *it++ );
