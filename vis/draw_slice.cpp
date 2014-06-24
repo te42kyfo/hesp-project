@@ -11,6 +11,7 @@ using namespace std;
 
 void SdlGl::initDrawSlice(char* argv0) {
 
+	perspective = 0;
 
 	glShadeModel( GL_FLAT );
     glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );

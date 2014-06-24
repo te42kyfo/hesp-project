@@ -1,17 +1,24 @@
 #include "real.hpp"
 
+float3 spiky_gradient_kernel( const real dx, const real dy, const real dz, const double h) {
+	real d = sqrt( dx*dx + dy*dy + dz*dz );
+
+	real diff = h-d;
+	if ( diff < 0 ) return 0.0;
+	if ( d <= 0.00000001) return 0.0;
+	real factor  = 1.0/ d * diff * diff / (13.0/6.0*(h*h*h));
+	float3 result = { dx*factor, dy*factor, dz*factor }; 
+	return result;
+}
+
 __kernel void update_velocities( const unsigned int N,
-								 const real dt, const real ks, const real kd,
-								 const real gx, const real gy, const real gz,
-								 int reflect_x, int reflect_y, int reflect_z,
-								 global real * m, global real * radius,
+								 const real dt, const real particle_mass, const real radius,
 								 global real * px, global real * py, global real * pz,
 								 global real * vx, global real * vy, global real * vz,
 								 global real * fx, global real * fy, global real * fz,
-								 global int* cells, global int* links,
+								 global real * ppressure, global real * pdensity,
 								 real x1, real y1, real z1,
-								 real x2, real y2, real z2,
-								 unsigned int nx, unsigned int ny, unsigned int nz) {
+								 real x2, real y2, real z2) {
 
 
 	const int globalid = get_global_id(0);
@@ -19,125 +26,45 @@ __kernel void update_velocities( const unsigned int N,
 
 
 
-	real new_force_x;
-	real new_force_y;
-	real new_force_z;
-
-	if( !isinf(m[globalid]) ) {
-		new_force_x = gx*m[globalid];
-		new_force_y = gy*m[globalid];
-		new_force_z = gz*m[globalid];
-	}
-
-	const int xindex = (px[globalid]-x1) / (x2-x1) * nx;
-	const int yindex = (py[globalid]-y1) / (y2-y1) * ny;
-	const int zindex = (pz[globalid]-z1) / (z2-z1) * nz;
+	real new_force_x = 0;
+	real new_force_y = 0;
+	real new_force_z = 0;
 
 
-	for( int iz = -1; iz <= 1; iz++) {
-		for( int iy = -1; iy <= 1; iy++) {
-			for( int ix = -1; ix <= 1; ix++) {
+	for( unsigned int i = 0; i < N; i++) {
+		if( i != globalid ) {
 
-				int xlocal = xindex+ix;
-				int ylocal = yindex+iy;
-				int zlocal = zindex+iz;
+			real dx = px[globalid] - px[i];
+			real dy = py[globalid] - py[i];
+			real dz = pz[globalid] - pz[i];
 
-				xlocal %= nx;
-				ylocal %= ny;
-				zlocal %= nz;
+			if( dx > (x2-x1)*0.5 ) dx -= (x2-x1);
+			if( dy > (y2-y1)*0.5 ) dy -= (y2-y1);
+			if( dz > (z2-z1)*0.5 ) dz -= (z2-z1);
 
-				const int cellindex = zlocal * nx*ny + ylocal *nx + xlocal;
-				int index = cells[cellindex];
+			if( dx < -(x2-x1)*0.5 ) dx += (x2-x1);
+			if( dy < -(y2-y1)*0.5 ) dy += (y2-y1);
+			if( dz < -(z2-z1)*0.5 ) dz += (z2-z1);
 
+			float3 pgrad = spiky_gradient_kernel( dx, dy, dz, radius);
+			real factor = 	(ppressure[globalid] + ppressure[i])*0.5 *
+				particle_mass / pdensity[i];
 
-				while( index != -1 ) {
-					if( index != globalid ) {
+			new_force_x += pgrad.x*factor;
+			new_force_y += pgrad.y*factor;
+			new_force_z += pgrad.z*factor;
 
-						real dx = px[globalid] - px[index];
-						real dy = py[globalid] - py[index];
-						real dz = pz[globalid] - pz[index];
-
-						if( dx > (x2-x1)*0.5 ) dx -= (x2-x1);
-						if( dy > (y2-y1)*0.5 ) dy -= (y2-y1);
-						if( dz > (z2-z1)*0.5 ) dz -= (z2-z1);
-
-						if( dx < -(x2-x1)*0.5 ) dx += (x2-x1);
-						if( dy < -(y2-y1)*0.5 ) dy += (y2-y1);
-						if( dz < -(z2-z1)*0.5 ) dz += (z2-z1);
-
-						real length = sqrt(dx*dx+dy*dy+dz*dz);
-
-						real p = radius[globalid] + radius[index] - length;
-						if( p > 0 ) {
-							real dvx = vx[globalid] - vx[index];
-							real dvy = vy[globalid] - vy[index];
-							real dvz = vz[globalid] - vz[index];
-
-							real dp = - (dx*dvx + dy*dvy + dz*dvz) / length;
-
-							new_force_x += dx/length * (ks*p+kd*dp);
-							new_force_y += dy/length * (ks*p+kd*dp);
-							new_force_z += dz/length * (ks*p+kd*dp);
-						}
-
-
-
-
-
-					}
-					index = links[index];
-				}
-
-			}
 		}
 	}
 
 
-	if( reflect_x != 0) {
-		real p = radius[globalid] - (px[globalid] - x1);
-		if( p > 0 ) {
-			real dp = - vx[globalid];
-			new_force_x += (ks*p + kd*dp);
-		}
-		p = radius[globalid] - (x2 - px[globalid]);
-		if( p > 0 ) {
-			real dp = vx[globalid];
-			new_force_x += - (ks*p+kd*dp);
-		}
-	}
+	vx[globalid] += (fx[globalid] + new_force_x) * dt * 0.5 / particle_mass;
+	vy[globalid] += (fy[globalid] + new_force_y) * dt * 0.5 / particle_mass;
+	vz[globalid] += (fz[globalid] + new_force_z) * dt * 0.5 / particle_mass;
 
-	if( reflect_y != 0) {
-		real p = radius[globalid] - (py[globalid] - y1);
-		if( p > 0 ) {
-			real dp = -vy[globalid];
-			new_force_y += (ks*p+kd*dp);
-		}
-		p = radius[globalid] - (y2 - py[globalid]);
-		if( p > 0 ) {
-			real dp =  vy[globalid];
-			new_force_y += - (ks*p+kd*dp);
-		}
-	}
-
-	if( reflect_z != 0) {
-		real p = radius[globalid] - (pz[globalid] - z1);
-		if( p > 0 ) {
-			real dp = - vz[globalid];
-			new_force_z += (ks*p+kd*dp);
-		}
-		p = radius[globalid] - (z2 - pz[globalid]);
-		if( p > 0 ) {
-			real dp = vz[globalid];
-			new_force_z += - (ks*p+kd*dp);
-		}
-	}
-
-
-	vx[globalid] += (fx[globalid] + new_force_x) * dt * 0.5 / m[globalid];
-	vy[globalid] += (fy[globalid] + new_force_y) * dt * 0.5 / m[globalid];
-	vz[globalid] += (fz[globalid] + new_force_z) * dt * 0.5 / m[globalid];
-
-
+	vx[globalid] *= 0.99;
+	vy[globalid] *= 0.99;
+	vz[globalid] *= 0.99;
 
 	fx[globalid] = new_force_x;
 	fy[globalid] = new_force_y;

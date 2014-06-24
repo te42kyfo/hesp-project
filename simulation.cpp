@@ -19,17 +19,15 @@ Simulation::Simulation(ParfileReader& params, char* argv0) {
 		ocl.init(basename);
 
 		dt = params.getDouble("timestep_length");
-		ks = params.getDouble("k_s");
-		kd = params.getDouble("k_d");
+
+		particle_mass = params.getDouble("particle_mass");
+		rest_density = params.getDouble("rest_density");
+		gas_stiffness = params.getDouble("gas_stiffness");
+		radius = params.getDouble("radius");
 
 
 		params.initDoubleList( { {"x_min", x1}, {"y_min", y1}, {"z_min", z1},
-			  				     {"x_max", x2}, {"y_max", y2}, {"z_max", z2},
-								 {"g_x", gx}, {"g_y", gy}, {"g_z", gz} });
-
-		nx = params.getInt( "x_n" );
-		ny = params.getInt( "y_n" );
-		nz = params.getInt( "z_n" );
+			  				     {"x_max", x2}, {"y_max", y2}, {"z_max", z2} });
 
 		reflect_x = params.getInt( "reflect_x" );
 		reflect_y = params.getInt( "reflect_y" );
@@ -42,30 +40,25 @@ Simulation::Simulation(ParfileReader& params, char* argv0) {
 													"update_velocities" );
 		update_positions_kernel = ocl.buildKernel( basename + "/update_positions.cl",
 												   "update_positions" );
-		reset_cells_kernel = ocl.buildKernel( basename + "/reset_cells.cl",
-											  "reset_cells" );
-		reset_links_kernel = ocl.buildKernel( basename + "/reset_links.cl",
-											  "reset_links" );
-		update_cells_kernel = ocl.buildKernel( basename + "/update_cells.cl",
-											   "update_cells" );
+
 		density_field_kernel = ocl.buildKernel( basename + "/density_field.cl",
 												"density_field" );
 		raymarch_kernel = ocl.buildKernel( basename + "/raymarch.cl",
 										   "raymarch" );
+		update_quantities_kernel = ocl.buildKernel( basename + "/update_quantities.cl",
+													"update_quantities" );
+
 
 		readInputFile( params.getString( "part_input_file" ));
 		force = ocl.v3Buffer<real>( pos.x.host().size() );
-		links = ocl.buffer<int>( pos.x.host().size() );
-		cells = ocl.buffer<int>( nx*nz*ny );
+
+		density  = ocl.buffer<real>( pos.x.host().size() );
+		pressure = ocl.buffer<real>( pos.x.host().size() );
 
 
 		ocl.copyUp( pos );
 		ocl.copyUp( vel );
 		ocl.copyUp( force );
-		ocl.copyUp( mass );
-		ocl.copyUp( radius );
-		ocl.copyUp( links );
-		ocl.copyUp( cells );
 }
 
 void Simulation::readInputFile(std::string filename) {
@@ -83,8 +76,7 @@ void Simulation::readInputFile(std::string filename) {
 
 		istream_iterator<double> it( line_stream );
 
-		mass.host().push_back( *it++ );
-		radius.host().push_back(  *it++ );
+
 		pos.x.host().push_back(  *it++ );
 		pos.y.host().push_back(  *it++ );
 		pos.z.host().push_back(  *it++ );
@@ -102,40 +94,25 @@ void Simulation::readInputFile(std::string filename) {
 
 void Simulation::step() {
 
-	ocl.execute( reset_cells_kernel, 1,
-				 { (nx*ny*nz/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
-				 {cl_workgroup_1dsize, 0, 0},
-				 (unsigned int) (nx*nz*ny), cells.device() );
-
-	ocl.execute( reset_links_kernel, 1,
+	ocl.execute( update_quantities_kernel, 1,
 				 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
 				 {cl_workgroup_1dsize, 0, 0},
-				 (unsigned int) (pos.x.deviceCount), links.device() );
-
-	ocl.execute( update_cells_kernel, 1,
-				 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
-				 {cl_workgroup_1dsize, 0, 0},
-				 (unsigned int) pos.x.deviceCount,
-				 cells.device(), links.device(),
+				 (unsigned int) pos.x.deviceCount, (real) particle_mass, (real) radius,
+				 (real) gas_stiffness, (real) rest_density,
 				 pos.x.device(), pos.y.device(), pos.z.device(),
-				 (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2,
-				 (unsigned int) nx, (unsigned int) ny, (unsigned int) nz);
+				 density.device(), pressure.device());
 
 
 	ocl.execute( update_velocities_kernel, 1,
 				 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
 				 {cl_workgroup_1dsize, 0, 0},
 				 (unsigned int) pos.x.deviceCount,
-				 (real) dt, (real) ks, (real) kd,
-				 (real) gx, (real) gy, (real) gz,
-				 reflect_x,  reflect_y,  reflect_z,
-				 mass.device(), radius.device(),
+				 (real) dt, (real) particle_mass, (real) radius,
 				 pos.x.device(), pos.y.device(), pos.z.device(),
 				 vel.x.device(), vel.y.device(), vel.z.device(),
 				 force.x.device(), force.y.device(), force.z.device(),
-				 cells.device(), links.device(),
-				 (real) x1, (real) y1, (real) z1, (real) x2, (real) y2, (real) z2,
-				 (unsigned int) nx, (unsigned int) ny, (unsigned int) nz);
+				 pressure.device(), density.device(),
+				 (real) x1, (real) y1, (real) z1, (real) x2, (real) y2, (real) z2);
 
 	ocl.execute( update_positions_kernel, 1,
 				 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
@@ -220,8 +197,6 @@ void Simulation::writeASCII( ostream& outputStream ) {
 			exit(1);
 		}
 		outputStream << fixed
-					 << mass.host()[i] << " "
-					 << radius.host()[i] << " "
 					 << pos.x.host()[i] << " "
 					 << pos.y.host()[i] << " "
 					 << pos.z.host()[i] << " "
@@ -243,7 +218,7 @@ void Simulation::writeVTK( ostream& outputStream ) {
 				 << "hesp visualization file\n"
 				 << "ASCII\n"
 				 << "DATASET UNSTRUCTURED_GRID\n"
-				 << "POINTS " << mass.host().size() << " double\n";
+				 << "POINTS " << vel.x.host().size() << " double\n";
 
 
 	for( size_t i = 0; i < pos.x.host().size(); i++) {
@@ -255,21 +230,8 @@ void Simulation::writeVTK( ostream& outputStream ) {
 
 	outputStream << "CELLS 0 0\n"
 				 << "CELL_TYPES 0\n"
-				 << "POINT_DATA " << mass.host().size() << "\n"
-				 << "SCALARS m double\n"
-				 << "LOOKUP_TABLE default\n";
-
-	for( size_t i = 0; i < pos.x.host().size(); i++) {
-		outputStream << fixed << mass.host()[i] << "\n";
-	}
-
-	outputStream << "SCALARS radius double\n"
-				 << "LOOKUP_TABLE default\n";
-
-	for( size_t i = 0; i < pos.x.host().size(); i++) {
-		outputStream << fixed << radius.host()[i] << "\n";
-	}
-
+				 << "POINT_DATA " << pos.x.host().size() << "\n";
+	
 	outputStream << "VECTORS v double\n";
 
 	for( size_t i = 0; i < pos.x.host().size(); i++) {
