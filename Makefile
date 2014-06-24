@@ -9,7 +9,7 @@ HESP_GL_LIB= -lGL -lGLEW `sdl2-config --libs` -lOpenCL
 HESP_GL_CPPFLAGS= -Ofast -Wall -std=c++0x `sdl2-config --cflags` -g
 
 HESP_SRC= main.cpp parfile_reader.cpp simulation.cpp ocl.cpp 
-HESP_GL_OBJ= hesp_gl.o ./vis/sdl_gl.o ./vis/draw_particles.o parfile_reader.o simulation.o ocl.o vis/lodepng.o dtime.o
+HESP_GL_OBJ= hesp_gl.o ./vis/sdl_gl.o ./vis/draw_particles.o ./vis/draw_slice.o parfile_reader.o simulation.o ocl.o vis/lodepng.o dtime.o
 
 HEADERS= $(shell find . -iname "*.hpp")
 

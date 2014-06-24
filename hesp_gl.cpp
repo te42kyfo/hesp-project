@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 
 	SdlGl vis;
 	vis.initDisplay();
-	vis.initDrawParticles( );
+	vis.initDrawSlice( argv[0] );
 	vis.setViewport(screenWidth, screenHeight);
 
 	double x1,y1,z1,x2,y2,z2;
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 
 
 		double t1 = dtime();
-		for( size_t i = 0; i< 2; i++) {
+		for( size_t i = 0; i< 200; i++) {
 			sim.step();
 		}
 
@@ -86,13 +86,12 @@ int main(int argc, char *argv[]) {
 
 		cout << fixed << (t2-t1)*1000 << " ";
 
-		//		sim.render( screenWidth, screenHeight);
+		sim.render( screenWidth, screenHeight);
 		double t3 = dtime();
 		cout << fixed << (t3-t2)*1000 << " ";
 
-		vis.drawParticles( sim.pos.x.host().data(), sim.pos.y.host().data(),
-						   sim.pos.z.host().data(), sim.pos.x.host().size(),
-						   x1, y1, z1, x2, y2, z2);
+		vis.drawSlice( sim.image.host().data(), screenWidth, screenHeight );
+
 		double t4 = dtime();
 		cout << fixed << (t4-t3)*1000 << " ";
 		cout << fixed << (t4 - totalFrametime )*1000 << "\n";
