@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 
 	if(argc < 2) {
 		std::cerr << "Not enough parameters\n Usage: "
-				  << argv[0] << "<parameter file>\n";
+				  << argv[0] << " <parameter file>\n";
 		exit(1);
 	}
 
@@ -36,12 +36,12 @@ int main(int argc, char** argv) {
 	while( t < time_end ) {
 		if( step % params.getInt("part_out_freq") == 0) {
 			ofstream outputFile( params.getString("part_out_name_base")
-								 + to_string(step) + ".txt" );
+				+ to_string((int)(step/params.getInt("part_out_freq"))) + ".out" );
 			sim.writeASCII( outputFile );
 		}
 		if( step % params.getInt("vtk_out_freq") == 0) {
 			ofstream outputFile( params.getString("vtk_out_name_base")
-								 + to_string(step) + ".vtk");
+				+ to_string((int)(step/params.getInt("vtk_out_freq"))) + ".vtk");
 			sim.writeVTK( outputFile );
 		}
 		sim.step();
