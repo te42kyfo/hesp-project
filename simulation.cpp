@@ -29,9 +29,6 @@ Simulation::Simulation(ParfileReader& params, char* argv0) {
 		params.initDoubleList( { {"x_min", x1}, {"y_min", y1}, {"z_min", z1},
 			  				     {"x_max", x2}, {"y_max", y2}, {"z_max", z2} });
 
-		reflect_x = params.getInt( "reflect_x" );
-		reflect_y = params.getInt( "reflect_y" );
-		reflect_z = params.getInt( "reflect_z" );
 
 
 		cl_workgroup_1dsize = params.getInt("cl_workgroup_1dsize");
@@ -100,7 +97,8 @@ void Simulation::step() {
 				 (unsigned int) pos.x.deviceCount, (real) particle_mass, (real) radius,
 				 (real) gas_stiffness, (real) rest_density,
 				 pos.x.device(), pos.y.device(), pos.z.device(),
-				 density.device(), pressure.device());
+				 density.device(), pressure.device(),
+				 (real) x1, (real) y1, (real) z1, (real) x2, (real) y2, (real) z2);
 
 
 	ocl.execute( update_velocities_kernel, 1,

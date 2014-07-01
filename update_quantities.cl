@@ -20,7 +20,9 @@ __kernel void update_quantities( const unsigned int N,
 								 const real particle_mass, const real radius,
 								 const real gas_stiffness, const real rest_density,
 								 global real * px, global real * py, global real * pz,
-								 global real * pdensity, global real* ppressure) {
+								 global real * pdensity, global real* ppressure,
+								 real xmin, real ymin, real zmin,
+								 real xmax, real ymax, real zmax) {
 
 
 	const int globalid = get_global_id(0);
@@ -45,8 +47,24 @@ __kernel void update_quantities( const unsigned int N,
 
 	}
 
-
 	ppressure[globalid] = ( ppressure[globalid] - rest_density) * gas_stiffness;
+
+	pdensity[globalid] +=
+		( default_kernel( px[globalid] - xmin, 0.0f, 0.0f, radius)
+		  + default_kernel( xmax - px[globalid], 0.0f, 0.0f, radius)
+		  + default_kernel( 0.0f, py[globalid] - ymin, 0.0f, radius)
+		  + default_kernel( 0.0f, ymax - py[globalid], 0.0f, radius)
+		  + default_kernel( 0.0f, 0.0f, pz[globalid] - zmin, radius)
+		  + default_kernel( 0.0f, 0.0f, zmax - pz[globalid], radius) ) * particle_mass;
+
+	ppressure[globalid] +=
+		( spiky_kernel( px[globalid] - xmin, 0.0f, 0.0f, radius)
+		  + spiky_kernel( xmax - px[globalid], 0.0f, 0.0f, radius)
+		  + spiky_kernel( 0.0f, py[globalid] - ymin, 0.0f, radius)
+		  + spiky_kernel( 0.0f, ymax - py[globalid], 0.0f, radius)
+		  + spiky_kernel( 0.0f, 0.0f, pz[globalid] - zmin, radius)
+		  + spiky_kernel( 0.0f, 0.0f, zmax - pz[globalid], radius) )
+		* particle_mass * gas_stiffness;
 
 
 
