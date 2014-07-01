@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 
 	if(argc < 2) {
 		std::cerr << "Not enough parameters\n Usage: "
-				  << argv[0] << "<parameter file>\n";
+				  << argv[0] << " <parameter file>\n";
 		exit(1);
 	}
 
