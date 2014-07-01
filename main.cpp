@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
 	while( t < time_end ) {
 		if( step % params.getInt("part_out_freq") == 0) {
 			ofstream outputFile( params.getString("part_out_name_base")
-								 + to_string(step) + ".txt" );
+								 + to_string(step) + ".out" );
 			sim.writeASCII( outputFile );
 		}
 		if( step % params.getInt("vtk_out_freq") == 0) {
