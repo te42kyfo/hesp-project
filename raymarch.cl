@@ -175,8 +175,8 @@ __kernel void raymarch( global real* density_field,
 									(cx-xmin)*ihx, (cy-ymin)*ihy, (cz-zmin)*ihz);
 
 
-			if( density > 100.0f ) {
-				float fine_t = ( density-100.0f) / (density-last_density);
+			if( density > 70.0f ) {
+				float fine_t = ( density-70.0f) / (density-last_density);
 
 				float fine_cx = cx - fine_t*stepsize*dir.x;
 				float fine_cy = cy - fine_t*stepsize*dir.y;

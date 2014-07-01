@@ -7,7 +7,7 @@ float3 spiky_gradient_kernel( const real dx, const real dy, const real dz, const
 	if ( diff < 0 ) return 0.0;
 	if ( d <= 0.00000001) return 0.0;
 	real factor  = 1.0/ d * diff * diff / (13.0/6.0*(h*h*h));
-	float3 result = { dx*factor, dy*factor, dz*factor }; 
+	float3 result = { dx*factor, dy*factor, dz*factor };
 	return result;
 }
 
@@ -17,8 +17,8 @@ __kernel void update_velocities( const unsigned int N,
 								 global real * vx, global real * vy, global real * vz,
 								 global real * fx, global real * fy, global real * fz,
 								 global real * ppressure, global real * pdensity,
-								 real x1, real y1, real z1,
-								 real x2, real y2, real z2) {
+								 real xmin, real ymin, real zmin,
+								 real xmax, real ymax, real zmax) {
 
 
 	const int globalid = get_global_id(0);
@@ -38,13 +38,6 @@ __kernel void update_velocities( const unsigned int N,
 			real dy = py[globalid] - py[i];
 			real dz = pz[globalid] - pz[i];
 
-			if( dx > (x2-x1)*0.5 ) dx -= (x2-x1);
-			if( dy > (y2-y1)*0.5 ) dy -= (y2-y1);
-			if( dz > (z2-z1)*0.5 ) dz -= (z2-z1);
-
-			if( dx < -(x2-x1)*0.5 ) dx += (x2-x1);
-			if( dy < -(y2-y1)*0.5 ) dy += (y2-y1);
-			if( dz < -(z2-z1)*0.5 ) dz += (z2-z1);
 
 			float3 pgrad = spiky_gradient_kernel( dx, dy, dz, radius);
 			real factor = 	(ppressure[globalid] + ppressure[i])*0.5 *
@@ -56,6 +49,25 @@ __kernel void update_velocities( const unsigned int N,
 
 		}
 	}
+
+	/*
+	new_force_x +=
+		( spiky_gradient_kernel( px[globalid] - xmin, 0.0f, 0.0f, radius).x
+		  + spiky_gradient_kernel( xmax - px[globalid], 0.0f, 0.0f, radius).x)
+		* ppressure[globalid] * 10.0;
+
+	new_force_y +=
+		( spiky_gradient_kernel( 0.0f, py[globalid] - ymin, 0.0f, radius).y
+		  + spiky_gradient_kernel( 0.0f, ymax - py[globalid], 0.0f, radius).y)
+		* ppressure[globalid] * 10.0;
+
+	new_force_z +=
+		( spiky_gradient_kernel( 0.0f, 0.0f,  pz[globalid] - zmin, radius).z
+		  + spiky_gradient_kernel( 0.0f, 0.0f, zmax - pz[globalid], radius).z)
+		* ppressure[globalid] * 10.0;
+		*/
+	new_force_y -= 10.0*particle_mass;
+
 
 
 	vx[globalid] += (fx[globalid] + new_force_x) * dt * 0.5 / particle_mass;

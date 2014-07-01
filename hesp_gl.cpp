@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 
 
 		double t1 = dtime();
-		for( size_t i = 0; i< 200; i++) {
+		for( size_t i = 0; i< 500; i++) {
 			sim.step();
 		}
 
