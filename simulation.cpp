@@ -70,6 +70,27 @@ Simulation::Simulation(ParfileReader& params, char* argv0) {
 		ocl.copyUp( radius );
 		ocl.copyUp( links );
 		ocl.copyUp( cells );
+
+		updateCellList();
+
+		ocl.execute( update_forces_kernel, 1,
+					 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
+					 {cl_workgroup_1dsize, 0, 0},
+					 (unsigned int) pos.x.deviceCount,
+					 (real) dt, (real) ks, (real) kd,
+					 (real) gx, (real) gy, (real) gz,
+					 reflect_x,  reflect_y,  reflect_z,
+					 mass.device(), radius.device(),
+					 pos.x.device(), pos.y.device(), pos.z.device(),
+					 vel.x.device(), vel.y.device(), vel.z.device(),
+					 force.x.device(), force.y.device(), force.z.device(),
+					 old_force.x.device(), old_force.y.device(), old_force.z.device(),
+					 cells.device(), links.device(),
+					 (real) x1, (real) y1, (real) z1, (real) x2, (real) y2, (real) z2,
+					 (unsigned int) nx, (unsigned int) ny, (unsigned int) nz);
+
+
+
 }
 
 void Simulation::readInputFile(std::string filename) {
@@ -111,8 +132,7 @@ void Simulation::readInputFile(std::string filename) {
 
 }
 
-void Simulation::step() {
-
+void Simulation::updateCellList() {
 	ocl.execute( reset_cells_kernel, 1,
 				 { (nx*ny*nz/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
 				 {cl_workgroup_1dsize, 0, 0},
@@ -131,6 +151,11 @@ void Simulation::step() {
 				 pos.x.device(), pos.y.device(), pos.z.device(),
 				 (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2,
 				 (unsigned int) nx, (unsigned int) ny, (unsigned int) nz);
+}
+
+void Simulation::step() {
+
+	updateCellList();
 
 	ocl.execute( update_positions_kernel, 1,
 				 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},

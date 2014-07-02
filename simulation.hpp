@@ -12,6 +12,8 @@ public:
 
 	void readInputFile(std::string filename);
 
+	void updateCellList();
+
 	void step();
 	void copyDown();
 
