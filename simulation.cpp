@@ -40,6 +40,8 @@ Simulation::Simulation(ParfileReader& params, char* argv0) {
 
 		update_velocities_kernel = ocl.buildKernel( basename + "/update_velocities.cl",
 													"update_velocities" );
+		update_forces_kernel = ocl.buildKernel( basename + "/update_forces.cl",
+													"update_forces" );
 		update_positions_kernel = ocl.buildKernel( basename + "/update_positions.cl",
 												   "update_positions" );
 		reset_cells_kernel = ocl.buildKernel( basename + "/reset_cells.cl",
@@ -55,6 +57,7 @@ Simulation::Simulation(ParfileReader& params, char* argv0) {
 
 		readInputFile( params.getString( "part_input_file" ));
 		force = ocl.v3Buffer<real>( pos.x.host().size() );
+		old_force = ocl.v3Buffer<real>( pos.x.host().size() );
 		links = ocl.buffer<int>( pos.x.host().size() );
 		cells = ocl.buffer<int>( nx*nz*ny );
 
@@ -62,6 +65,7 @@ Simulation::Simulation(ParfileReader& params, char* argv0) {
 		ocl.copyUp( pos );
 		ocl.copyUp( vel );
 		ocl.copyUp( force );
+		ocl.copyUp( old_force );
 		ocl.copyUp( mass );
 		ocl.copyUp( radius );
 		ocl.copyUp( links );
@@ -128,8 +132,18 @@ void Simulation::step() {
 				 (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2,
 				 (unsigned int) nx, (unsigned int) ny, (unsigned int) nz);
 
+	ocl.execute( update_positions_kernel, 1,
+				 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
+				 {cl_workgroup_1dsize, 0, 0},
+				 (unsigned int) pos.x.deviceCount, (real) dt,
+				 reflect_x,  reflect_y,  reflect_z,
+				 mass.device(),
+				 pos.x.device(), pos.y.device(), pos.z.device(),
+				 vel.x.device(), vel.y.device(), vel.z.device(),
+				 force.x.device(), force.y.device(), force.z.device(),
+				 (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2);
 
-	ocl.execute( update_velocities_kernel, 1,
+	ocl.execute( update_forces_kernel, 1,
 				 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
 				 {cl_workgroup_1dsize, 0, 0},
 				 (unsigned int) pos.x.deviceCount,
@@ -140,19 +154,21 @@ void Simulation::step() {
 				 pos.x.device(), pos.y.device(), pos.z.device(),
 				 vel.x.device(), vel.y.device(), vel.z.device(),
 				 force.x.device(), force.y.device(), force.z.device(),
+				 old_force.x.device(), old_force.y.device(), old_force.z.device(),
 				 cells.device(), links.device(),
 				 (real) x1, (real) y1, (real) z1, (real) x2, (real) y2, (real) z2,
 				 (unsigned int) nx, (unsigned int) ny, (unsigned int) nz);
 
-	ocl.execute( update_positions_kernel, 1,
+	ocl.execute( update_velocities_kernel, 1,
 				 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
 				 {cl_workgroup_1dsize, 0, 0},
 				 (unsigned int) pos.x.deviceCount, (real) dt,
-				 reflect_x,  reflect_y,  reflect_z,
-				 pos.x.device(), pos.y.device(), pos.z.device(),
+				 mass.device(),
 				 vel.x.device(), vel.y.device(), vel.z.device(),
 				 force.x.device(), force.y.device(), force.z.device(),
-				 (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2);
+				 old_force.x.device(), old_force.y.device(), old_force.z.device() );
+
+
 }
 
 void Simulation::render( size_t imageWidth, size_t imageHeight) {

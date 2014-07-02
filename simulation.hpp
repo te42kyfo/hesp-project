@@ -30,6 +30,8 @@ public:
 
 	cl_kernel update_velocities_kernel;
 	cl_kernel update_positions_kernel;
+	cl_kernel update_forces_kernel;
+
 	cl_kernel reset_links_kernel;
 	cl_kernel reset_cells_kernel;
 	cl_kernel update_cells_kernel;
@@ -40,6 +42,7 @@ public:
 	OCLv3Buffer<real> pos;
 	OCLv3Buffer<real> vel;
 	OCLv3Buffer<real> force;
+	OCLv3Buffer<real> old_force;
 
 	OCLBuffer<real> mass;
 	OCLBuffer<real> radius;

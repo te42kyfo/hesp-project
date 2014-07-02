@@ -2,6 +2,7 @@
 
 __kernel void update_positions ( const unsigned N, const real dt,
 								 int reflect_x, int reflect_y, int reflect_z,
+								 global real* m,
 								 global real* px, global real* py, global real* pz,
 								 global real* vx, global real* vy, global real* vz,
 								 global real* fx, global real* fy, global real* fz,
@@ -13,9 +14,9 @@ __kernel void update_positions ( const unsigned N, const real dt,
 
 	real dt2 = 0.5*dt*dt;
 
-	px[gid] += dt * vx[gid] + dt2 * fx[gid];
-	py[gid] += dt * vy[gid] + dt2 * fy[gid];
-	pz[gid] += dt * vz[gid] + dt2 * fz[gid];
+	px[gid] += dt * vx[gid] + dt2 * fx[gid] / m[gid];
+	py[gid] += dt * vy[gid] + dt2 * fy[gid] / m[gid];
+	pz[gid] += dt * vz[gid] + dt2 * fz[gid] / m[gid];
 
 	real bx = (px[gid]-x1) / (x2-x1);
 	real by = (py[gid]-y1) / (y2-y1);
