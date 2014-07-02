@@ -89,7 +89,7 @@ void Simulation::readInputFile(std::string filename) {
 			mass.host().push_back( stod( mass_string ) );
 		}
 
-		istream_iterator<double> it( line_stream );
+		istream_iterator<real> it( line_stream );
 
 		radius.host().push_back(  *it++ );
 		pos.x.host().push_back(  *it++ );
