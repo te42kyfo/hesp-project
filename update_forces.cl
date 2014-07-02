@@ -20,9 +20,9 @@ __kernel void update_forces( const unsigned int N,
 
 
 
-	real new_force_x;
-	real new_force_y;
-	real new_force_z;
+	real new_force_x = 0;
+	real new_force_y = 0;
+	real new_force_z = 0;
 
 	if( !isinf(m[globalid]) ) {
 		new_force_x = gx*m[globalid];
