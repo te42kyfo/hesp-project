@@ -268,7 +268,7 @@ void Simulation::writeVTK( ostream& outputStream ) {
 		outputStream << fixed << mass.host()[i] << "\n";
 	}
 
-	outputStream << "SCALARS radius double\n"
+	outputStream << "SCALARS r double\n"
 				 << "LOOKUP_TABLE default\n";
 
 	for( size_t i = 0; i < pos.x.host().size(); i++) {
