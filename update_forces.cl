@@ -12,7 +12,7 @@ __kernel void update_forces( const unsigned int N,
 							 global int* cells, global int* links,
 							 real x1, real y1, real z1,
 							 real x2, real y2, real z2,
-							 unsigned int nx, unsigned int ny, unsigned int nz) {
+							 int nx, int ny, int nz) {
 
 
 	const int globalid = get_global_id(0);
@@ -24,6 +24,8 @@ __kernel void update_forces( const unsigned int N,
 	real new_force_y = 0;
 	real new_force_z = 0;
 
+	int force_count = 0;
+	int cell_count = 0;
 	if( !isinf(m[globalid]) ) {
 		new_force_x = gx*m[globalid];
 		new_force_y = gy*m[globalid];
@@ -39,19 +41,31 @@ __kernel void update_forces( const unsigned int N,
 		for( int iy = -1; iy <= 1; iy++) {
 			for( int ix = -1; ix <= 1; ix++) {
 
+				cell_count++;
+
 				int xlocal = xindex+ix;
 				int ylocal = yindex+iy;
 				int zlocal = zindex+iz;
+
+				xlocal += 2*nx;
+				ylocal += 2*ny;
+				zlocal += 2*nz;
 
 				xlocal %= nx;
 				ylocal %= ny;
 				zlocal %= nz;
 
+
+
 				const int cellindex = zlocal * nx*ny + ylocal *nx + xlocal;
 				int index = cells[cellindex];
 
 
+				int inner_cell_count = 0;
+
 				while( index != -1 ) {
+
+
 					if( index != globalid ) {
 
 						real dx = px[globalid] - px[index];
@@ -68,26 +82,30 @@ __kernel void update_forces( const unsigned int N,
 
 						real length = sqrt(dx*dx+dy*dy+dz*dz);
 
+						dx /= length;
+						dy /= length;
+						dz /= length;
+
 						real p = radius[globalid] + radius[index] - length;
 						if( p > 0 ) {
 							real dvx = vx[globalid] - vx[index];
 							real dvy = vy[globalid] - vy[index];
 							real dvz = vz[globalid] - vz[index];
 
-							real dp = - (dx*dvx + dy*dvy + dz*dvz) / length;
+							real dp = - (dx*dvx + dy*dvy + dz*dvz);
 
-							new_force_x += dx/length * (ks*p+kd*dp);
-							new_force_y += dy/length * (ks*p+kd*dp);
-							new_force_z += dz/length * (ks*p+kd*dp);
+
+							new_force_x += dx * (ks*p+kd*dp);
+							new_force_y += dy * (ks*p+kd*dp);
+							new_force_z += dz * (ks*p+kd*dp);
 						}
-
-
-
-
-
+						force_count++;
+						inner_cell_count++;
 					}
 					index = links[index];
+
 				}
+
 
 			}
 		}
