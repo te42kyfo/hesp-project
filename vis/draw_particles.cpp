@@ -27,7 +27,7 @@ void SdlGl::initDrawParticles() {
 	//	glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
 	//	glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_WRAP_R,GL_CLAMP_TO_EDGE);
 	//  glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_WRAP_R,GL_CLAMP_TO_EDGE);
-
+	/*
 	string basename( "vis/cube_beach/" );
 	for( auto it : vector<pair< GLenum, string>>
 		{ {GL_TEXTURE_CUBE_MAP_POSITIVE_X, "posx"},
@@ -50,7 +50,7 @@ void SdlGl::initDrawParticles() {
 		glTexImage2D( it.first, 0, GL_RGB8, texWidth, texHeight, 0, GL_RGB,
 					  GL_UNSIGNED_BYTE, image.data());
 	}
-
+	*/
 	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
 	sphere_program = loadShader( "./vis/sphere.vert", "./vis/sphere.frag" );
@@ -117,7 +117,7 @@ void SdlGl::drawParticles(float* px, float* py, float* pz, float* radius, size_t
 		glScalef(xscale, yscale, zscale);
 		glTranslatef( px[i], py[i], pz[i]);
 		glTranslatef( -x1, -y1, 0.0);
-		glScalef( 1.5*radius[i]/xscale, 1.5*radius[i]/yscale, 0.0);
+		glScalef( 0.9*radius[i]/xscale, 0.9*radius[i]/yscale, 0.0);
 
 
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_BYTE, indices.data() );

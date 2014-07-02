@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 
 	SdlGl vis;
 	vis.initDisplay();
-	vis.initDrawSlice( argv[0] );
+	vis.initDrawParticles(  );
 	vis.setViewport(screenWidth, screenHeight);
 
 	double x1,y1,z1,x2,y2,z2;
@@ -77,20 +77,22 @@ int main(int argc, char *argv[]) {
 
 
 		double t1 = dtime();
-		for( size_t i = 0; i< 40; i++) {
+		for( size_t i = 0; i< 400; i++) {
 			sim.step();
 		}
 		double t2 = dtime();
+		cout << fixed << (t2-t1)*1000 << "\n";
 
-		cout << fixed << (t2-t1)*1000 << " ";
+		sim.copyDown();
 
-		sim.render( screenWidth, screenHeight);
+		vis.drawParticles( sim.pos.x.host().data(),
+						   sim.pos.y.host().data(),
+						   sim.pos.z.host().data(),
+						   sim.radius.host().data(),
+						   sim.pos.x.host().size(),
+						   x1, y1, z1, x2, y2, z2 );
 		double t3 = dtime();
-		cout << fixed << (t3-t2)*1000 << " ";
-
-		vis.drawSlice( sim.image.host().data(), screenWidth, screenHeight );
-		double t4 = dtime();
-		cout << fixed << (t4-t3)*1000 << "\n";
+		cout << fixed << (t3-t2)*1000 << "\n";
 
 		SDL_GL_SwapWindow( vis.window);
 	}
