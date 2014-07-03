@@ -146,7 +146,7 @@ void Simulation::render( size_t imageWidth, size_t imageHeight) {
 	ocl.execute( density_field_kernel, 3,
 				 { global_x_size, global_y_size, global_z_size },
 				 { local3DSize, local3DSize, local3DSize},
-				 (unsigned int) pos.x.deviceCount,
+				 (unsigned int) pos.x.deviceCount, (real) radius,
 				 pos.x.device(), pos.y.device(), pos.z.device(), density_field.device(),
 				 localMemory { local3DSize*local3DSize*local3DSize *sizeof(unsigned int) },
 				 xcount, ycount, zcount,

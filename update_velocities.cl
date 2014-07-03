@@ -74,10 +74,10 @@ __kernel void update_velocities( const unsigned int N,
 	vy[globalid] += (fy[globalid] + new_force_y) * dt * 0.5 / particle_mass;
 	vz[globalid] += (fz[globalid] + new_force_z) * dt * 0.5 / particle_mass;
 
-	vx[globalid] *= 0.996;
+	/*	vx[globalid] *= 0.996;
 	vy[globalid] *= 0.996;
 	vz[globalid] *= 0.996;
-
+	*/
 	fx[globalid] = new_force_x;
 	fy[globalid] = new_force_y;
 	fz[globalid] = new_force_z;

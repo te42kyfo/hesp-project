@@ -1,12 +1,20 @@
 #include "real.hpp"
 
-__kernel void density_field( const unsigned particleCount,
+real default_kernel( const real dx, const real dy, const real dz,
+					 const real h, const real invh6)  {
+	real cudiff = h*h - (dx*dx + dy*dy + dz*dz);
+	if ( cudiff < 0 ) return 0.0;
+	return invh6 *cudiff*cudiff*cudiff;
+}
+
+__kernel void density_field( const unsigned particleCount, real radius,
 							 global real* px, global real* py, global real* pz,
 							 global real* density_field, __local unsigned int* preCheck,
 							 unsigned int xcount, unsigned int ycount, unsigned int zcount,
 							 real xmin, real ymin, real zmin,
 							 real xmax, real ymax, real zmax ) {
 
+	radius *= 0.5;
 
 	size_t gidx = get_global_id(0);
 	size_t gidy = get_global_id(1);
@@ -28,6 +36,8 @@ __kernel void density_field( const unsigned particleCount,
 
 	density_field[globalid] = 0;
 
+	const real invh6 = 35.0f/32.0f * native_recip( pown( radius, 6) );
+
 	if( gidx < xcount-1 && gidy < ycount-1 && gidz < zcount &&
 		gidx > 0 && gidy > 0 && gidz > 0)  {
 
@@ -44,10 +54,10 @@ __kernel void density_field( const unsigned particleCount,
 			float dx = px[i] - cellx;
 			float dy = py[i] - celly;
 			float dz = pz[i] - cellz;
-			float d = dx*dx+dy*dy+dz*dz;
-			if( d < 20.0 ) {
-				density_field[globalid] += 1.0f/d;
-			}
+
+
+			density_field[globalid] += default_kernel( dx, dy, dz, radius, invh6);
+
 		}
 	}
 
