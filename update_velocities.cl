@@ -1,6 +1,6 @@
 #include "real.hpp"
 
-float3 spiky_gradient_kernel( const real dx, const real dy, const real dz, const double h) {
+float3 spiky_gradient_kernel( const real dx, const real dy, const real dz, const real h) {
 	real d = sqrt( dx*dx + dy*dy + dz*dz );
 
 	real diff = h-d;

@@ -1,16 +1,16 @@
 #include "real.hpp"
 
 
-real default_kernel( const real dx, const real dy, const real dz, const double h)  {
+real default_kernel( const real dx, const real dy, const real dz, const real h)  {
 	real cudiff = h*h - (dx*dx + dy*dy + dz*dz);
 	if ( cudiff < 0 ) return 0.0;
 	return 35.0f/32.0f/(h*h*h*h*h*h*h) *cudiff*cudiff*cudiff;
 }
 
-real spiky_kernel( const real dx, const real dy, const real dz, const double h)  {
+real spiky_kernel( const real dx, const real dy, const real dz, const real h)  {
 	real d2 = (dx*dx + dy*dy + dz*dz);
 	if ( h*h < d2 ) return 0.0f;
-	double diff = h-sqrt(d2);
+	real diff = h-sqrt(d2);
 	return diff*diff*diff*0.25f/(h*h*h*h);
 }
 

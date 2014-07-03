@@ -81,7 +81,7 @@ cl_kernel OCL::buildKernel ( string filename, string kernel_name) {
 													NULL, &error);
 	cl_check(error);
 
-	string options( "-cl-fast-relaxed-math -I");
+	string options( "-cl-single-precision-constant -cl-fast-relaxed-math -I");
 	options += basename;
 
 
