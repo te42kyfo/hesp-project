@@ -34,6 +34,10 @@ struct OCLv3Buffer {
 };
 
 
+struct localMemory {
+	size_t size;
+};
+
 class OCL {
 public:
 	void init();
@@ -158,6 +162,19 @@ private:
 				  std::vector<size_t> global_size, std::vector<size_t> local_size,
 				  T argument, Args... args) {
 		cl_int err =  clSetKernelArg( kernel, argument_index, sizeof(T), &argument);
+		if( err != CL_SUCCESS) {
+			std::cerr << "Argument index " << argument_index << "\n";
+			cl_check(err);
+		}
+
+		execute_t( argument_index+1, kernel, dim, global_size, local_size, args...);
+	}
+
+	template< typename ... Args>
+	void execute_t( size_t argument_index, cl_kernel kernel, size_t dim,
+				  std::vector<size_t> global_size, std::vector<size_t> local_size,
+				  localMemory argument, Args... args) {
+		cl_int err =  clSetKernelArg( kernel, argument_index, argument.size, nullptr);
 		if( err != CL_SUCCESS) {
 			std::cerr << "Argument index " << argument_index << "\n";
 			cl_check(err);

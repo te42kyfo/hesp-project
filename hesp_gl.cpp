@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 							 {"x_max", x2}, {"y_max", y2}, {"z_max", z2} });
 
 
-
+	double totalFrametime = dtime();
 	SDL_Event e;
 	bool quit = false;
 
@@ -77,9 +77,11 @@ int main(int argc, char *argv[]) {
 
 
 		double t1 = dtime();
-		for( size_t i = 0; i< 40; i++) {
+		for( size_t i = 0; i< 500; i++) {
 			sim.step();
 		}
+
+		sim.copyDown();
 		double t2 = dtime();
 
 		cout << fixed << (t2-t1)*1000 << " ";
@@ -89,8 +91,11 @@ int main(int argc, char *argv[]) {
 		cout << fixed << (t3-t2)*1000 << " ";
 
 		vis.drawSlice( sim.image.host().data(), screenWidth, screenHeight );
+
 		double t4 = dtime();
-		cout << fixed << (t4-t3)*1000 << "\n";
+		cout << fixed << (t4-t3)*1000 << " ";
+		cout << fixed << (t4 - totalFrametime )*1000 << "\n";
+		totalFrametime = t4;
 
 		SDL_GL_SwapWindow( vis.window);
 	}

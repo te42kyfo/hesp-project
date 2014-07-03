@@ -10,7 +10,7 @@ using namespace std;
 void SdlGl::initDrawParticles() {
 	glShadeModel( GL_FLAT );
     glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
-	glDisable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 	glEnable( GL_BLEND );
 
@@ -56,10 +56,10 @@ void SdlGl::initDrawParticles() {
 	sphere_program = loadShader( "./vis/sphere.vert", "./vis/sphere.frag" );
 }
 
-void SdlGl::drawParticles(float* px, float* py, float* pz, float* radius, size_t particleCount,
+void SdlGl::drawParticles(float* px, float* py, float* pz, size_t particleCount,
 						  float x1, float y1, float z1, float x2, float y2, float z2) {
 
-	glClear( GL_COLOR_BUFFER_BIT );
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(0);
 	glDisable(GL_TEXTURE_2D);
 
@@ -111,13 +111,15 @@ void SdlGl::drawParticles(float* px, float* py, float* pz, float* radius, size_t
 	glUseProgram(sphere_program);
 
 	for(size_t i = 0; i < particleCount; i++) {
+
+		//		cout << px[i] << "\n";
 		glLoadIdentity();
 
 		glTranslatef( -1.0, -1.0, 0.0);
 		glScalef(xscale, yscale, zscale);
 		glTranslatef( px[i], py[i], pz[i]);
 		glTranslatef( -x1, -y1, 0.0);
-		glScalef( 1.5*radius[i]/xscale, 1.5*radius[i]/yscale, 0.0);
+		glScalef( 0.02/xscale, 0.02/yscale, 0.0);
 
 
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_BYTE, indices.data() );

@@ -5,11 +5,15 @@
 using namespace std;
 
 void SdlGl::setViewport( int width, int height ) {
-    glViewport( 0, 0, ( GLsizei )width, ( GLsizei )height );
+	glViewport( 0, 0, ( GLsizei )width, ( GLsizei )height );
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	glOrtho( (float) -width/height, (float) width/height, -1.0, 1.0, -1, 1);
+	if( perspective == 0) {
+		glOrtho( (float) -width/height, (float) width/height, -1.0, 1.0, -1, 1);
+	} else {
+		glFrustum( (float) -width/height, (float) width/height, -1.0, 1.0, -5, 10);
+	}
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();

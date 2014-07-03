@@ -22,17 +22,20 @@ public:
 
 
 	unsigned int particleCount;
-	double dt, ks, kd;
-	double gx, gy, gz;
+	double particle_mass;
+	double gas_stiffness;
+	double rest_density;
+	double radius;
+	double dt;
+
+
 	unsigned int cl_workgroup_1dsize;
 
 	int reflect_x, reflect_y, reflect_z;
 
 	cl_kernel update_velocities_kernel;
 	cl_kernel update_positions_kernel;
-	cl_kernel reset_links_kernel;
-	cl_kernel reset_cells_kernel;
-	cl_kernel update_cells_kernel;
+	cl_kernel update_quantities_kernel;
 
 	cl_kernel density_field_kernel;
 	cl_kernel raymarch_kernel;
@@ -40,15 +43,14 @@ public:
 	OCLv3Buffer<real> pos;
 	OCLv3Buffer<real> vel;
 	OCLv3Buffer<real> force;
+	OCLBuffer<real> density;
+	OCLBuffer<real> pressure;
 
-	OCLBuffer<real> mass;
-	OCLBuffer<real> radius;
+
 	OCLBuffer<real> image;
 	OCLBuffer<real> density_field;
 
 
-	OCLBuffer<int> links;
-	OCLBuffer<int> cells;
 
 
 	double x1, y1, z1;
