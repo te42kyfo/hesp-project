@@ -166,7 +166,7 @@ void Simulation::render( size_t imageWidth, size_t imageHeight) {
 				 xcount, ycount, zcount,
 				 (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2,
 				 image.device(), (unsigned int) imageWidth, (unsigned int) imageHeight,
-				 cl_float4{0.0, 0.0, -4.0, 0.0}, cl_float4{0.0, 0.0, 1.0, 2.0});
+				 cl_float4{0.0, 0.0, -10.0, 0.0}, cl_float4{0.0, 0.0, 1.0, 2.0});
 
 	ocl.copyDown( image );
 
