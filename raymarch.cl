@@ -7,6 +7,10 @@ float sample( global real* image, unsigned int xcount, unsigned int ycount, unsi
 	int iy = y;
 	int iz = z;
 
+	if( ix == 0 || iy == 0 || iz == 0) {
+	  return 0.0;
+	}
+
 
 	float fracx = fmod(x, 1.0f);
 	float fracy = fmod(y, 1.0f);
