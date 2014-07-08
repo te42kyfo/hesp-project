@@ -1,7 +1,7 @@
 #include "real.hpp"
 
 float sample( global real* image, unsigned int xcount, unsigned int ycount, unsigned int zcount,
-			  float x, float y, float z) {
+	      float x, float y, float z) {
 
 	int ix = x;
 	int iy = y;
@@ -28,44 +28,45 @@ float sample( global real* image, unsigned int xcount, unsigned int ycount, unsi
 }
 
 float3 calculateNormal( global real* density_field,
-						unsigned int xcount, unsigned int ycount, unsigned int zcount,
-						float cx, float cy, float cz,
-						float xmin, float ymin, float zmin,
-						float hx, float hy, float hz,
-						float ihx, float ihy, float ihz) {
-	float3 normal;
-	normal.x = ( sample( density_field, xcount, ycount, zcount,
-						 (cx+hx-xmin)*ihx,
-						 (cy-ymin)*ihy,
-						 (cz-zmin)*ihz) -
-				 sample( density_field, xcount, ycount, zcount,
-						 (cx-hx-xmin)*ihx,
-						 (cy-ymin)*ihy,
-						 (cz-zmin)*ihz))*0.5 ;
-	normal.y = ( sample( density_field, xcount, ycount, zcount,
-						 (cx-xmin)*ihx,
-						 (cy+hy-ymin)*ihy,
-						 (cz-zmin)*ihz) -
-				 sample( density_field, xcount, ycount, zcount,
-						 (cx-xmin)*ihx,
-						 (cy-hy-ymin)*ihy,
-						 (cz-zmin)*ihz))*0.5 ;
-	normal.z = ( sample( density_field, xcount, ycount, zcount,
-						 (cx-xmin)*ihx,
-						 (cy-ymin)*ihy,
-						 (cz+hz-zmin)*ihz) -
-				 sample( density_field, xcount, ycount, zcount,
-						 (cx-xmin)*ihx,
-						 (cy-ymin)*ihy,
-						 (cz-hz-zmin)*ihz))*0.5 ;
-	return normal;
+			unsigned int xcount, unsigned int ycount, unsigned int zcount,
+			float cx, float cy, float cz,
+			float xmin, float ymin, float zmin,
+			float hx, float hy, float hz,
+			float ihx, float ihy, float ihz) {
+
+  float3 normal;
+  normal.x = ( sample( density_field, xcount, ycount, zcount,
+		       (cx+hx-xmin)*ihx,
+		       (cy-ymin)*ihy,
+		       (cz-zmin)*ihz) -
+	       sample( density_field, xcount, ycount, zcount,
+		       (cx-hx-xmin)*ihx,
+		       (cy-ymin)*ihy,
+		       (cz-zmin)*ihz))*0.5 ;
+  normal.y = ( sample( density_field, xcount, ycount, zcount,
+		       (cx-xmin)*ihx,
+		       (cy+hy-ymin)*ihy,
+		       (cz-zmin)*ihz) -
+	       sample( density_field, xcount, ycount, zcount,
+		       (cx-xmin)*ihx,
+		       (cy-hy-ymin)*ihy,
+		       (cz-zmin)*ihz))*0.5 ;
+  normal.z = ( sample( density_field, xcount, ycount, zcount,
+		       (cx-xmin)*ihx,
+		       (cy-ymin)*ihy,
+		       (cz+hz-zmin)*ihz) -
+	       sample( density_field, xcount, ycount, zcount,
+		       (cx-xmin)*ihx,
+		       (cy-ymin)*ihy,
+		       (cz-hz-zmin)*ihz))*0.5 ;
+  return normal;
 
 }
 
 float3 shade( float3 normal, float3 incoming) {
 
 	float3 light1 = { 0.0, -1.0, 0.0 };
-	float3 light2 = { -0.2, 0.0, 1.0 };
+	float3 light2 = { -1.0, 0.0, 1.0 };
 
 	light1 = normalize( light1 );
 	light2 = normalize( light2 );
@@ -113,8 +114,6 @@ __kernel void raymarch( global real* density_field,
 
 	float4 fcell_count = (float4)(cell_count.x, cell_count.y, cell_count.z, 1.0);
 
-
-
 	float4 dir = { ( (float) gidx/width*2.0f  -1.0f),
 				   ( (float) gidy/height*2.0f -1.0f),
 				   1.0f, 0.0f };
@@ -124,15 +123,13 @@ __kernel void raymarch( global real* density_field,
 	float4 ih = native_recip(h);
 
 	//AABB advance
-	float4 txyz0 = min( max( 0.0f, (lo_bound + 2.0f*h - origin) / dir),
-						max( 0.0f, (hi_bound - 2.0f*h - origin) / dir) );
+	float4 txyz0 = min( max( 0.0f, (lo_bound + 3.0f*h - origin) / dir),
+			    max( 0.0f, (hi_bound - 3.0f*h - origin) / dir) );
 
 	float t0 = max(txyz0.x, max(txyz0.y, txyz0.z));
 
 	float4 current = origin + t0*dir;
 	float stepsize = min4( h / fabs(dir) );
-
-	float4 current_index = floor( (current-lo_bound)*ih);
 
 	float t = t0;
 
@@ -146,8 +143,8 @@ __kernel void raymarch( global real* density_field,
 
 	while( true ) {
 
-	  if( any( (current_index < 1.0f).xyz) || 
-	      any( (current_index > (fcell_count-2.0f)).xyz) ) {
+	  if( any( (current <= lo_bound+h).xyz) || 
+	      any( (current >= hi_bound-h).xyz) ) {
 	    break;
 	  }
 
@@ -159,9 +156,7 @@ __kernel void raymarch( global real* density_field,
 	  if( density > 0.1f ) {
 	    float fine_t = ( density-0.1f) / (density-last_density);
 	    
-	    
 	    float4 fine_position = current - fine_t*stepsize*dir;
-	    
 
 	    float3 normal = (float3) ( 0.0, 0.0, 1.0);
 	    if(!entry) {
@@ -187,10 +182,6 @@ __kernel void raymarch( global real* density_field,
 	  
 	  
 	  current += stepsize* dir;
-	  
-	  
-	  current_index = floor((current-lo_bound)*ih);
-	  
 	}
 
 }

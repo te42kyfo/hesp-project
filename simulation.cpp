@@ -92,35 +92,35 @@ void Simulation::readInputFile(std::string filename) {
 void Simulation::step() {
 
 	ocl.execute( update_quantities_kernel, 1,
-				 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
-				 {cl_workgroup_1dsize, 0, 0},
-				 (unsigned int) pos.x.deviceCount, (real) particle_mass, (real) radius,
-				 (real) gas_stiffness, (real) rest_density,
-				 pos.x.device(), pos.y.device(), pos.z.device(),
-				 density.device(), pressure.device(),
-				 (real) x1, (real) y1, (real) z1, (real) x2, (real) y2, (real) z2);
-
+		     { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
+		     {cl_workgroup_1dsize, 0, 0},
+		     (unsigned int) pos.x.deviceCount, (real) particle_mass, (real) radius,
+		     (real) gas_stiffness, (real) rest_density,
+		     pos.x.device(), pos.y.device(), pos.z.device(),
+		     density.device(), pressure.device(),
+		     (real) x1, (real) y1, (real) z1, (real) x2, (real) y2, (real) z2);
+	
 
 	ocl.execute( update_velocities_kernel, 1,
-				 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
-				 {cl_workgroup_1dsize, 0, 0},
-				 (unsigned int) pos.x.deviceCount,
-				 (real) dt, (real) particle_mass, (real) radius,
-				 pos.x.device(), pos.y.device(), pos.z.device(),
-				 vel.x.device(), vel.y.device(), vel.z.device(),
-				 force.x.device(), force.y.device(), force.z.device(),
-				 pressure.device(), density.device(),
-				 (real) x1, (real) y1, (real) z1, (real) x2, (real) y2, (real) z2);
+		     { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
+		     {cl_workgroup_1dsize, 0, 0},
+		     (unsigned int) pos.x.deviceCount,
+		     (real) dt, (real) particle_mass, (real) radius,
+		     pos.x.device(), pos.y.device(), pos.z.device(),
+		     vel.x.device(), vel.y.device(), vel.z.device(),
+		     force.x.device(), force.y.device(), force.z.device(),
+		     pressure.device(), density.device(),
+		     (real) x1, (real) y1, (real) z1, (real) x2, (real) y2, (real) z2);
 
 	ocl.execute( update_positions_kernel, 1,
-				 { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
-				 {cl_workgroup_1dsize, 0, 0},
-				 (unsigned int) pos.x.deviceCount, (real) dt,
-				 reflect_x,  reflect_y,  reflect_z,
-				 pos.x.device(), pos.y.device(), pos.z.device(),
-				 vel.x.device(), vel.y.device(), vel.z.device(),
-				 force.x.device(), force.y.device(), force.z.device(),
-				 (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2);
+		     { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
+		     {cl_workgroup_1dsize, 0, 0},
+		     (unsigned int) pos.x.deviceCount, (real) dt,
+		     reflect_x,  reflect_y,  reflect_z,
+		     pos.x.device(), pos.y.device(), pos.z.device(),
+		     vel.x.device(), vel.y.device(), vel.z.device(),
+		     force.x.device(), force.y.device(), force.z.device(),
+		     (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2);
 }
 
 void Simulation::render( size_t imageWidth, size_t imageHeight) {
@@ -144,13 +144,13 @@ void Simulation::render( size_t imageWidth, size_t imageHeight) {
 	size_t global_z_size = (zcount/local3DSize+1)*local3DSize;
 
 	ocl.execute( density_field_kernel, 3,
-				 { global_x_size, global_y_size, global_z_size },
-				 { local3DSize, local3DSize, local3DSize},
-				 (unsigned int) pos.x.deviceCount, (real) radius,
-				 pos.x.device(), pos.y.device(), pos.z.device(), density_field.device(),
-				 localMemory { local3DSize*local3DSize*local3DSize *sizeof(unsigned int) },
-				 xcount, ycount, zcount,
-				 (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2);
+		     { global_x_size, global_y_size, global_z_size },
+		     { local3DSize, local3DSize, local3DSize},
+		     (unsigned int) pos.x.deviceCount, (real) radius,
+		     pos.x.device(), pos.y.device(), pos.z.device(), density_field.device(),
+		     localMemory { local3DSize*local3DSize*local3DSize *sizeof(unsigned int) },
+		     xcount, ycount, zcount,
+		     (real) x1, (real)y1, (real)z1, (real)x2, (real)y2, (real)z2);
 
 
 	ocl.finish();
@@ -166,7 +166,7 @@ void Simulation::render( size_t imageWidth, size_t imageHeight) {
 		     cl_uint4{ xcount, ycount, zcount, 0},
 		     cl_float4 {x1,y1,z1, 0.0}, cl_float4{x2, y2, z2, 0.0},
 		     image.device(), (unsigned int) imageWidth, (unsigned int) imageHeight,
-		     cl_float4{0.0, 0.0, -2.2, 0.0}, cl_float4{0.0, 0.0, 1.0, 2.0});
+		     cl_float4{0.0, 0.0, -3.4, 0.0}, cl_float4{0.0, 0.0, 1.0, 2.0});
 
 	ocl.copyDown( image );
 
