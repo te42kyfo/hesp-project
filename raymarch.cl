@@ -64,8 +64,8 @@ float3 calculateNormal( global real* density_field,
 
 float3 shade( float3 normal, float3 incoming) {
 
-	float3 light1 = { 1.0, -0.4, 2.0 };
-	float3 light2 = { -1.0, 0.0, 0.2 };
+	float3 light1 = { 0.0, -1.0, 0.0 };
+	float3 light2 = { -1.0, 0.0, 1.0 };
 
 	light1 = normalize( light1 );
 	light2 = normalize( light2 );
@@ -101,10 +101,10 @@ float min4( float4 v) {
 }
 
 __kernel void raymarch( global real* density_field,
-						uint4 cell_count,
-						float4 lo_bound, float4 hi_bound,
-						global real* image,	unsigned int width, unsigned int height,
-						float4 origin, float4 direction) {
+			uint4 cell_count,
+			float4 lo_bound, float4 hi_bound,
+			global real* image,	unsigned int width, unsigned int height,
+			float4 origin, float4 direction) {
 
 	size_t gidx = get_global_id(0);
 	size_t gidy = get_global_id(1);
@@ -142,47 +142,55 @@ __kernel void raymarch( global real* density_field,
 
 	float last_density = 0;
 
-	while( all( (current_index >= 1.0f && current_index < (fcell_count-2.0f)).xyz) ) {
-		//	if( all( (current_index >= 1.0f && current_index < (fcell_count-2.0f)).xyz) ) {
+	bool entry = true;
 
-			float density = sample( density_field, cell_count.x, cell_count.y, cell_count.z,
-									(current.x-lo_bound.x)*ih.x,
-									(current.y-lo_bound.y)*ih.y, (current.z-lo_bound.z)*ih.z);
+	while( true ) {
 
+	  if( any( (current_index < 1.0f).xyz) || 
+	      any( (current_index > (fcell_count-2.0f)).xyz) ) {
+	    break;
+	  }
 
-			if( density > 0.1f ) {
-				float fine_t = ( density-0.1f) / (density-last_density);
+	  float density = sample( density_field, cell_count.x, cell_count.y, cell_count.z,
+				  (current.x-lo_bound.x)*ih.x,
+				  (current.y-lo_bound.y)*ih.y, (current.z-lo_bound.z)*ih.z);
+	  
+	  
+	  if( density > 0.1f ) {
+	    float fine_t = ( density-0.1f) / (density-last_density);
+	    
+	    
+	    float4 fine_position = current - fine_t*stepsize*dir;
+	    
 
-
-				float4 fine_position = current - fine_t*stepsize*dir;
-
-				float3 normal =
-					calculateNormal( density_field,
-									 cell_count.x, cell_count.y, cell_count.z,
-									 fine_position.x, fine_position.y, fine_position.z,
-									 lo_bound.x, lo_bound.y, lo_bound.z,
-									 h.x, h.y, h.z, ih.x, ih.y, ih.z );
-
-
-				float3 color = shade( normalize( normal), dir.xyz );
-				image[globalid+0] = color.x; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
-				image[globalid+1] = color.y; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
-				image[globalid+2] = color.z; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
-				break;
-			}
-
-			last_density = density;
-			//}
-
-
-		t += stepsize;
-
-
-		current += stepsize* dir;
-
-
-		current_index = floor((current-lo_bound)*ih);
-
+	    float3 normal = (float3) ( 0.0, 0.0, 1.0);
+	    if(!entry) {
+	      normal = calculateNormal( density_field,
+					cell_count.x, cell_count.y, cell_count.z,
+					fine_position.x, fine_position.y, fine_position.z,
+					lo_bound.x, lo_bound.y, lo_bound.z,
+					h.x, h.y, h.z, ih.x, ih.y, ih.z );
+	    }
+	    
+	    float3 color = shade( normalize( normal), dir.xyz );
+	    image[globalid+0] = color.x; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
+	    image[globalid+1] = color.y; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
+	    image[globalid+2] = color.z; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
+	    break;
+	  }
+	  
+	  last_density = density;
+	  //}
+	  
+	  entry = false;
+	  t += stepsize;
+	  
+	  
+	  current += stepsize* dir;
+	  
+	  
+	  current_index = floor((current-lo_bound)*ih);
+	  
 	}
 
 }
