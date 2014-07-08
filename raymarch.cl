@@ -14,6 +14,7 @@ float sample( global real* image, unsigned int xcount, unsigned int ycount, unsi
 
 	unsigned int idx = (int)x + iy*xcount + iz*xcount*ycount;
 
+
 	float d000 = image[ idx                         ];
 	float d001 = image[ idx+1                       ];
 	float d010 = image[ idx   +xcount               ];
@@ -122,8 +123,8 @@ __kernel void raymarch( global real* density_field,
 	float4 ih = native_recip(h);
 
 	//AABB advance
-	float4 txyz0 = min( max( 0.0f, (lo_bound + 2.0f*h - origin) / dir),
-						max( 0.0f, (hi_bound - 2.0f*h - origin) / dir) );
+	float4 txyz0 = min( max( 0.0f, (lo_bound + 3.0f*h - origin) / dir),
+						max( 0.0f, (hi_bound - 3.0f*h - origin) / dir) );
 
 	float t0 = max(txyz0.x, max(txyz0.y, txyz0.z));
 
@@ -140,38 +141,35 @@ __kernel void raymarch( global real* density_field,
 
 	float last_density = 0;
 
-	while( all( (current_index >= 1.0f && current_index < (fcell_count-2.0f)).xyz) ) {
-		//	if( all( (current_index >= 1.0f && current_index < (fcell_count-2.0f)).xyz) ) {
+	while( all( (current_index > 2.0f && current_index < (fcell_count-5.0f)).xyz) ) {
 
-			float density = sample( density_field, cell_count.x, cell_count.y, cell_count.z,
-									(current.x-lo_bound.x)*ih.x,
-									(current.y-lo_bound.y)*ih.y, (current.z-lo_bound.z)*ih.z);
-
-
-			if( density > 0.1f ) {
-				float fine_t = ( density-0.1f) / (density-last_density);
+		float density = sample( density_field, cell_count.x, cell_count.y, cell_count.z,
+								(current.x-lo_bound.x)*ih.x,
+								(current.y-lo_bound.y)*ih.y,
+								(current.z-lo_bound.z)*ih.z);
 
 
-				float4 fine_position = current - fine_t*stepsize*dir;
+		if( density > 0.1f ) {
 
-				float3 normal =
-					calculateNormal( density_field,
-									 cell_count.x, cell_count.y, cell_count.z,
-									 fine_position.x, fine_position.y, fine_position.z,
-									 lo_bound.x, lo_bound.y, lo_bound.z,
-									 h.x, h.y, h.z, ih.x, ih.y, ih.z );
+			//float fine_t = ( density-0.1f) / (density-last_density);
+
+			float4 fine_position = current;// - fine_t*stepsize*dir;
+
+			float3 normal =
+				calculateNormal( density_field,
+								 cell_count.x, cell_count.y, cell_count.z,
+								 fine_position.x, fine_position.y, fine_position.z,
+								 lo_bound.x, lo_bound.y, lo_bound.z,
+								 h.x, h.y, h.z, ih.x, ih.y, ih.z );
 
 
-				float3 color = shade( normalize( normal), dir.xyz );
-				image[globalid+0] = color.x; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
-				image[globalid+1] = color.y; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
-				image[globalid+2] = color.z; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
-				break;
-			}
+			float3 color = shade( normalize( normal), dir.xyz );
+			image[globalid+0] += 0.1*color.x;
+			image[globalid+1] += 0.1*color.y;
+			image[globalid+2] += 0.1*color.z;
+		}
 
-			last_density = density;
-			//}
-
+		last_density = density;
 
 		t += stepsize;
 
