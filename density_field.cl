@@ -38,27 +38,23 @@ __kernel void density_field( const unsigned particleCount, real radius,
 
 	const real invh6 = 35.0f/32.0f * native_recip( pown( radius, 6) );
 
-	if( gidx < xcount-1 && gidy < ycount-1 && gidz < zcount &&
-		gidx > 0 && gidy > 0 && gidz > 0)  {
 
 
-
-		float cellx = xmin + (float) gidx/xcount * (xmax-xmin);
-		float celly = ymin + (float) gidy/ycount * (ymax-ymin);
-		float cellz = zmin + (float) gidz/zcount * (zmax-zmin);
-
-
-		density_field[globalid] = 0.0f;
-
-		for( unsigned int i = 0; i < particleCount; i++) {
-			float dx = px[i] - cellx;
-			float dy = py[i] - celly;
-			float dz = pz[i] - cellz;
+	float cellx = xmin + (float) gidx/xcount * (xmax-xmin);
+	float celly = ymin + (float) gidy/ycount * (ymax-ymin);
+	float cellz = zmin + (float) gidz/zcount * (zmax-zmin);
 
 
-			density_field[globalid] += default_kernel( dx, dy, dz, radius, invh6);
+	density_field[globalid] = 0.0f;
 
-		}
+	for( unsigned int i = 0; i < particleCount; i++) {
+		float dx = px[i] - cellx;
+		float dy = py[i] - celly;
+		float dz = pz[i] - cellz;
+
+
+		density_field[globalid] += default_kernel( dx, dy, dz, radius, invh6);
+
 	}
 
 
