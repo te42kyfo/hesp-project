@@ -27,9 +27,9 @@ float sample( global real* image, unsigned int xcount, unsigned int ycount, unsi
 	float d101 = image[ idx+1         +ycount*xcount];
 	float d110 = image[ idx   +xcount +ycount*xcount];
 	float d111 = image[ idx+1 +xcount +ycount*xcount];
-
+	
 	return mix( mix ( mix(d000, d001, fracx), mix(d010, d011, fracx), fracy),
-				mix ( mix(d100, d101, fracx), mix(d110, d111, fracx), fracy), fracz);
+		    mix ( mix(d100, d101, fracx), mix(d110, d111, fracx), fracy), fracz);
 }
 
 float3 calculateNormal( global real* density_field,
@@ -120,8 +120,11 @@ __kernel void raymarch( global real* density_field,
 	float4 fcell_count = (float4)(cell_count.x, cell_count.y, cell_count.z, 1.0);
 
 	float4 dir = { ( (float) gidx/width*2.0f  -1.0f),
-				   ( (float) gidy/height*2.0f -1.0f),
-				   1.0f, 0.0f };
+		       ( (float) gidy/height*2.0f -1.0f),
+		       1.0f, 0.0f };
+
+	dir.y = dir.y*0.8 + dir.z*-0.2;
+	dir.z = dir.y*0.2 + dir.z*0.8;
 
 
 	float4 h = (hi_bound-lo_bound) / fcell_count;
