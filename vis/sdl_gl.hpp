@@ -21,7 +21,7 @@ public:
 
 
 	void initDrawSlice( char* argv0 );
-	void drawSlice(float* slice_ptr, size_t width, size_t height);
+	void drawSlice(float* slice_ptr, int width, int height);
 
 	void initDrawParticles();
 	void drawParticles(float* px, float* py, float* pz, size_t particleCount,

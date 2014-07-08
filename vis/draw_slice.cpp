@@ -27,7 +27,7 @@ void SdlGl::initDrawSlice(char* argv0) {
 
 
 
-void SdlGl::drawSlice(float* slice_ptr, size_t width, size_t height) {
+void SdlGl::drawSlice(float* slice_ptr, int width, int height) {
 
 	frame_number++;
 
@@ -35,10 +35,13 @@ void SdlGl::drawSlice(float* slice_ptr, size_t width, size_t height) {
 	glLoadIdentity();
 
 
-	vector<GLfloat> vertices = { -1.0, -1.0, 0.0,
-								 1.0, -1.0, 0.0,
-								 -1.0,  1.0, 0.0,
-								 1.0,  1.0, 0.0 };
+	cout << (float) -width/height << "\n";
+
+	vector<GLfloat> vertices = { (float) -width/height, -1.0, 0.0,
+								 (float) width/height, -1.0, 0.0,
+								 (float) -width/height,  1.0, 0.0,
+								 (float) width/height,  1.0, 0.0 };
+
 	vector<GLfloat> texCoords = { 0.0, 0.0,
 								  1.0, 0.0,
 								  0.0, 1.0,

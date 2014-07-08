@@ -10,7 +10,7 @@ cl_workgroup_3dsize_x 8
 cl_workgroup_3dsize_y 4
 cl_workgroup_3dsize_z 4
 particle_mass		  0.1
-x_min                 -2
+x_min                 -3
 y_min                 -2
 z_min                 -0.1
 x_max                 2
@@ -19,6 +19,6 @@ z_max                 2.1
 reflect_x             1
 reflect_y             1
 reflect_z             1
-rest_density          1.0
+rest_density          2.0
 gas_stiffness	         1000
-radius		   1.0
+radius		   0.7

@@ -65,7 +65,7 @@ float3 calculateNormal( global real* density_field,
 
 float3 shade( float3 normal, float3 incoming) {
 
-	float3 light1 = { 1.0, -0.4, 2.0 };
+	float3 light1 = { 0.0, -5, 0.0 };
 	float3 light2 = { -1.0, 0.0, 0.2 };
 
 	light1 = normalize( light1 );
@@ -75,14 +75,14 @@ float3 shade( float3 normal, float3 incoming) {
 
 	float3 reflection =  -(incoming - 2.0f *normal* dot( incoming, normal ));
 
-	float lambert1 = dot( light1, normal );
+	//float lambert1 = dot( light1, normal );
 	float specular1 = dot( light1, reflection );
-	float lambert2 = dot( light2, normal );
+	//float lambert2 = dot( light2, normal );
 	float specular2 = dot( light2, reflection );
 
-	lambert1 = max(lambert1, 0.0f);
+	//lambert1 = 0;max(lambert1, 0.0f);
 	specular1 = max(specular1, 0.0f);
-	lambert2 = max(lambert2, 0.0f);
+	//lambert2 = 0;max(lambert2, 0.0f);
 	specular2 = max(specular2, 0.0f);
 
 
@@ -92,9 +92,9 @@ float3 shade( float3 normal, float3 incoming) {
 	float3 color1 = { specular1, specular1, specular1 };
 	float3 color2 = { specular2, specular2, specular2 };
 
-    float3 blue1   = { 0.3f * lambert1, 0.3 * lambert1, 0.8f * lambert1  };
-    float3 blue2   = { 0.1f * lambert2, 0.1 * lambert2, 0.4f * lambert2  };
-	return color1 + color2 + blue1 + blue2;
+    //float3 blue1   = { 0.3f * lambert1, 0.3 * lambert1, 0.8f * lambert1  };
+    //float3 blue2   = { 0.1f * lambert2, 0.1 * lambert2, 0.4f * lambert2  };
+	return color1 + color2;// + blue1 + blue2;
 }
 
 float min4( float4 v) {
@@ -104,22 +104,23 @@ float min4( float4 v) {
 __kernel void raymarch( global real* density_field,
 						uint4 cell_count,
 						float4 lo_bound, float4 hi_bound,
-						global real* image,	unsigned int width, unsigned int height,
+						global real* image,	 int width,  int height,
 						float4 origin, float4 direction) {
 
-	size_t gidx = get_global_id(0);
-	size_t gidy = get_global_id(1);
-	size_t globalid = (gidy*width +gidx)*3;
+	int gidx = get_global_id(0);
+	int gidy = get_global_id(1);
+	int globalid = (gidy*width +gidx)*3;
 	if( gidx >= width || gidy >= height) return;
 
 	float4 fcell_count = (float4)(cell_count.x, cell_count.y, cell_count.z, 1.0);
 
 
 
-	float4 dir = { ( (float) gidx/width*2.0f  -1.0f),
-				   ( (float) gidy/height*2.0f -1.0f),
+	float4 dir = { ( ((float) gidx -  width*0.5)/height ),
+				   ( ((float) gidy - height*0.5)/height ),
 				   1.0f, 0.0f };
 
+	//	printf( "%f | %d\n", dir.x, gidx);
 
 	float4 h = (hi_bound-lo_bound) / fcell_count;
 	float4 ih = native_recip(h);
@@ -143,6 +144,9 @@ __kernel void raymarch( global real* density_field,
 
 	float last_density = 0;
 
+	float3 accumulated_color = (float3)(0,0,0);
+	float opacity  = 1.0;
+
 	while( all( (current_index > 2.0f && current_index < (fcell_count-5.0f)).xyz) ) {
 
 		float density = sample( density_field, cell_count.x, cell_count.y, cell_count.z,
@@ -153,9 +157,9 @@ __kernel void raymarch( global real* density_field,
 
 		if( density > 0.1f ) {
 
-			//float fine_t = ( density-0.1f) / (density-last_density);
+			float fine_t = ( density-0.1f) / (density-last_density);
 
-			float4 fine_position = current;// - fine_t*stepsize*dir;
+			float4 fine_position = current - fine_t*stepsize*dir;
 
 			float3 normal =
 				calculateNormal( density_field,
@@ -165,11 +169,18 @@ __kernel void raymarch( global real* density_field,
 								 h.x, h.y, h.z, ih.x, ih.y, ih.z );
 
 
-			float3 color = shade( normalize( normal), dir.xyz );
-			image[globalid+0] += 0.1*color.x;
-			image[globalid+1] += 0.1*color.y;
-			image[globalid+2] += 0.1*color.z;
+			if( last_density < 0.1f) {
+				accumulated_color += shade( normalize( normal), dir.xyz )*opacity;
+			} else {
+				accumulated_color += (float3)(0.01, 0.01, 0.02)*opacity;
+				opacity*=0.99;
+			}
+
 		}
+
+		image[globalid+0] = accumulated_color.x;
+		image[globalid+1] = accumulated_color.y;
+		image[globalid+2] = accumulated_color.z;
 
 		last_density = density;
 
