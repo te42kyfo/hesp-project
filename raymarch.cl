@@ -7,7 +7,8 @@ float sample( global real* image, unsigned int xcount, unsigned int ycount, unsi
 	int iy = y;
 	int iz = z;
 
-	if( ix == 0 || iy == 0 || iz == 0) {
+	if( ix == 0 || iy == 0 || iz == 0 ||
+	    ix >= xcount-2 || iy >= ycount-2 || iz >= zcount-2 ) {
 	  return 0.0;
 	}
 
