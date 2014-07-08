@@ -65,7 +65,7 @@ float3 calculateNormal( global real* density_field,
 float3 shade( float3 normal, float3 incoming) {
 
 	float3 light1 = { 0.0, -1.0, 0.0 };
-	float3 light2 = { -1.0, 0.0, 1.0 };
+	float3 light2 = { -0.2, 0.0, 1.0 };
 
 	light1 = normalize( light1 );
 	light2 = normalize( light2 );
