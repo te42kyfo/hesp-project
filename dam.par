@@ -19,6 +19,6 @@ z_max                 2.1
 reflect_x             1
 reflect_y             1
 reflect_z             1
-rest_density          2.0
-gas_stiffness	         1000
-radius		   0.7
+rest_density          0.1
+gas_stiffness	         100
+radius		   1.0
