@@ -89,10 +89,12 @@ float3 shade( float3 normal, float3 incoming) {
 	specular1 = pow( specular1, 60);
 	specular2 = pow( specular2, 60);
 
-	float3 color1 = { specular1, specular1, lambert1+specular1};
-	float3 color2 = { specular2+lambert2, specular2, specular2};
+	float3 color1 = { specular1, specular1, specular1 };
+	float3 color2 = { specular2, specular2, specular2 };
 
-	return color1+color2;
+    float3 blue1   = { 0.3f * lambert1, 0.3 * lambert1, 0.8f * lambert1  };
+    float3 blue2   = { 0.1f * lambert2, 0.1 * lambert2, 0.4f * lambert2  };
+	return color1 + color2 + blue1 + blue2;
 }
 
 float min4( float4 v) {
