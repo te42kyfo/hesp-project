@@ -165,8 +165,8 @@ void Simulation::render( size_t imageWidth, size_t imageHeight) {
 		     density_field.device(),
 		     cl_uint4{ xcount, ycount, zcount, 0},
 		     cl_float4 {x1,y1,z1, 0.0}, cl_float4{x2, y2, z2, 0.0},
-		     image.device(), (int) imageWidth, (int) imageHeight,
-		     cl_float4{0.0, 0.0, -3.0, 0.0}, cl_float4{0.0, 0.0, 1.0, 2.0});
+		     image.device(), (unsigned int) imageWidth, (unsigned int) imageHeight,
+		     cl_float4{0.0, 0.0, -2.2, 0.0}, cl_float4{0.0, 0.0, 1.0, 2.0});
 
 	ocl.copyDown( image );
 
