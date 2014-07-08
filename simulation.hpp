@@ -34,6 +34,7 @@ public:
 	int reflect_x, reflect_y, reflect_z;
 
 	cl_kernel update_velocities_kernel;
+	cl_kernel update_forces_kernel;
 	cl_kernel update_positions_kernel;
 	cl_kernel update_quantities_kernel;
 
@@ -43,15 +44,14 @@ public:
 	OCLv3Buffer<real> pos;
 	OCLv3Buffer<real> vel;
 	OCLv3Buffer<real> force;
+	OCLv3Buffer<real> old_force;
+
 	OCLBuffer<real> density;
 	OCLBuffer<real> pressure;
 
 
 	OCLBuffer<real> image;
 	OCLBuffer<real> density_field;
-
-
-
 
 	double x1, y1, z1;
 	double x2, y2, z2;

@@ -21,43 +21,31 @@ __kernel void update_positions ( const unsigned N, const real dt,
   if( px[gid] < xmin ) {
     px[gid] = 2.0f * xmin - px[gid];
     vx[gid] *= -0.5;
-    //    vy[gid] *= 0.9f;
-    //vz[gid] *= 0.9f;
   }
 
   if( px[gid] > xmax ) {
     px[gid] = 2.0f * xmax - px[gid];
     vx[gid] *= -0.5;
-    //  vy[gid] *= 0.9f;
-    //vz[gid] *= 0.9f;
   }
 
   if( py[gid] < ymin ) {
     py[gid] = 2.0f * ymin - py[gid];
     vy[gid] *= -0.5;
-    //vx[gid] *= 0.9f;
-    //vz[gid] *= 0.9f;
   }
 
   if( py[gid] > ymax ) {
     py[gid] = 2.0f * ymax - py[gid];
     vy[gid] *= -0.5;
-    //vx[gid] *= 0.9f;
-    //vz[gid] *= 0.9f;
   }
 
   if( pz[gid] < zmin ) {
     pz[gid] = 2.0f * zmin - pz[gid];
     vz[gid] *= -0.5;
-    //vx[gid] *= 0.9f;
-    //vy[gid] *= 0.9f;
   }
 
   if( pz[gid] > zmax ) {
     pz[gid] = 2.0f * zmax - pz[gid];
     vz[gid] *= -0.5;
-    //vx[gid] *= 0.9f;
-    // vy[gid] *= 0.9f;
   }
 
 
