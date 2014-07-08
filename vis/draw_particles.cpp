@@ -117,7 +117,7 @@ void SdlGl::drawParticles(float* px, float* py, float* pz, float* radius, size_t
 		glScalef(xscale, yscale, zscale);
 		glTranslatef( px[i], py[i], pz[i]);
 		glTranslatef( -x1, -y1, 0.0);
-		glScalef( 0.9*radius[i]/xscale, 0.9*radius[i]/yscale, 0.0);
+		glScalef( 0.7*radius[i]/xscale, 0.7*radius[i]/yscale, 0.0);
 
 
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_BYTE, indices.data() );
