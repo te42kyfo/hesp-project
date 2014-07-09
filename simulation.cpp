@@ -24,6 +24,7 @@ Simulation::Simulation(ParfileReader& params, char* argv0) {
   rest_density = params.getDouble("rest_density");
   gas_stiffness = params.getDouble("gas_stiffness");
   radius = params.getDouble("radius");
+  viscosity = params.getDouble("viscosity");
 
 
   params.initDoubleList( { {"x_min", x1}, {"y_min", y1}, {"z_min", z1},
@@ -102,18 +103,18 @@ void Simulation::step() {
 	       pos.x.device(), pos.y.device(), pos.z.device(),
 	       density.device(), pressure.device(),
 	       (real) x1, (real) y1, (real) z1, (real) x2, (real) y2, (real) z2);
-	
+
   ocl.execute( update_forces_kernel, 1,
-	       { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
-	       {cl_workgroup_1dsize, 0, 0},
-	       (unsigned int) pos.x.deviceCount,
-	       (real) particle_mass, (real) radius,
-	       pos.x.device(), pos.y.device(), pos.z.device(),
-	       vel.x.device(), vel.y.device(), vel.z.device(),
-	       force.x.device(), force.y.device(), force.z.device(),
-	       old_force.x.device(), old_force.y.device(), old_force.z.device(),
-	       density.device(), pressure.device(),
-	       (real) x1, (real) y1, (real) z1, (real) x2, (real) y2, (real) z2);
+			   { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
+			   {cl_workgroup_1dsize, 0, 0},
+			   (unsigned int) pos.x.deviceCount,
+			   (real) particle_mass, (real) radius, (real) viscosity,
+			   pos.x.device(), pos.y.device(), pos.z.device(),
+			   vel.x.device(), vel.y.device(), vel.z.device(),
+			   force.x.device(), force.y.device(), force.z.device(),
+			   old_force.x.device(), old_force.y.device(), old_force.z.device(),
+			   density.device(), pressure.device(),
+			   (real) x1, (real) y1, (real) z1, (real) x2, (real) y2, (real) z2);
 
   ocl.execute( update_velocities_kernel, 1,
 	       { (pos.x.deviceCount/cl_workgroup_1dsize+1) * cl_workgroup_1dsize , 0, 0},
