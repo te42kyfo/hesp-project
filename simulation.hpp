@@ -27,7 +27,7 @@ public:
 	double rest_density;
 	double radius;
 	double dt;
-
+	double viscosity;
 
 	unsigned int cl_workgroup_1dsize;
 
