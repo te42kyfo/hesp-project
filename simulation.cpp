@@ -180,7 +180,7 @@ void Simulation::render( size_t imageWidth, size_t imageHeight) {
 	       cl_float4 { (real)x1, (real) y1, (real) z1, 0.0f},
 	       cl_float4 { (real)x2, (real) y2, (real) z2, 0.0f},
 	       image.device(), (unsigned int) imageWidth, (unsigned int) imageHeight,
-	       cl_float4{-0.5, 0.5, -1.8, 0.0}, cl_float4{0.0, 0.0, 1.0, 2.0});
+	       cl_float4{-0.5, 1.0, -4.5, 0.0}, cl_float4{0.0, 0.0, 1.0, 2.0});
 
   ocl.copyDown( image );
 

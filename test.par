@@ -19,7 +19,7 @@ z_max                 5
 reflect_x             1
 reflect_y             1
 reflect_z             1
-rest_density          0.0
+rest_density          0.2
 gas_stiffness	         1000
 viscosity				 0.1
-radius		   1.9
+radius		   3.0

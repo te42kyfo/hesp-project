@@ -70,8 +70,8 @@ float3 calculateNormal( global real* density_field,
 
 float3 shade( float3 normal, float3 incoming) {
 
-	float3 light1 = { 0.0, -1.0, 0.0 };
-	float3 light2 = { -1.0, 0.0, 1.0 };
+	float3 light1 = { 0.0, -1.0, 1.0 };
+	float3 light2 = { -1.0, 0.0, 0.0 };
 
 	light1 = normalize( light1 );
 	light2 = normalize( light2 );
@@ -97,9 +97,9 @@ float3 shade( float3 normal, float3 incoming) {
 	float3 color1 = { specular1, specular1, specular1 };
 	float3 color2 = { specular2, specular2, specular2 };
 
-    float3 blue1   = { 0.3f * lambert1, 0.3 * lambert1, 0.8f * lambert1  };
-    float3 blue2   = { 0.1f * lambert2, 0.1 * lambert2, 0.4f * lambert2  };
-	return color1 + color2 + blue1 + blue2;
+    float3 blue1   = { 0.3f * lambert1, 0.3 * lambert1, 1.0f * lambert1  };
+    float3 blue2   = { 0.3f * lambert2, 0.3 * lambert2, 1.0f * lambert2  };
+	return color1 +  color2 + blue1 + blue2;
 }
 
 float min4( float4 v) {
@@ -111,7 +111,6 @@ __kernel void raymarch( global real* density_field,
 			float4 lo_bound, float4 hi_bound,
 			global real* image,	unsigned int width, unsigned int height,
 			float4 origin, float4 direction) {
-
 	size_t gidx = get_global_id(0);
 	size_t gidy = get_global_id(1);
 	size_t globalid = (gidy*width +gidx)*3;
@@ -148,23 +147,27 @@ __kernel void raymarch( global real* density_field,
 	float last_density = 0;
 
 	bool entry = true;
+	bool in_domain = true;
 
-	while( true ) {
+	while( in_domain ) {
 
-	  if( any( (current <= lo_bound+h).xyz) || 
-	      any( (current >= hi_bound-h).xyz) ) {
-	    break;
+	  if( any( (current <= lo_bound+1.5*h).xyz) ||
+	      any( (current >= hi_bound-1.5*h).xyz) ) {
+		  float4 projected = min(current, hi_bound-2*h);
+		  projected = max(projected, lo_bound-2*h);
+		  current = projected;
+		  in_domain = false;
 	  }
 
 	  float density = sample( density_field, cell_count.x, cell_count.y, cell_count.z,
 				  (current.x-lo_bound.x)*ih.x,
 				  (current.y-lo_bound.y)*ih.y, (current.z-lo_bound.z)*ih.z);
-	  
-	  
-	  if( density > 0.1f ) {
-	    float fine_t = ( density-0.1f) / (density-last_density);
-	    
+
+	  if( density > 0.2f ) {
+	    float fine_t = ( density-0.2f) / (density-last_density);
+
 	    float4 fine_position = current - fine_t*stepsize*dir;
+
 
 	    float3 normal = (float3) ( 0.0, 0.0, 1.0);
 	    if(!entry) {
@@ -174,21 +177,20 @@ __kernel void raymarch( global real* density_field,
 					lo_bound.x, lo_bound.y, lo_bound.z,
 					h.x, h.y, h.z, ih.x, ih.y, ih.z );
 	    }
-	    
+
 	    float3 color = shade( normalize( normal), dir.xyz );
 	    image[globalid+0] = color.x; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
 	    image[globalid+1] = color.y; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
 	    image[globalid+2] = color.z; //ny*1.0f;//  + ny*-0.5f + nz*1.0f;
 	    break;
 	  }
-	  
+
 	  last_density = density;
 	  //}
-	  
+
 	  entry = false;
 	  t += stepsize;
-	  
-	  
+
 	  current += stepsize* dir;
 	}
 
